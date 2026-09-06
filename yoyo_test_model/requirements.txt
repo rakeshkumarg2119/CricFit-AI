@@ -1,4 +1,5 @@
-opencv-python
-mediapipe
-numpy
-scipy
+mediapipe 
+opencv-python-headless 
+scipy 
+numpy 
+matplotlib
