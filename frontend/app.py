@@ -138,9 +138,18 @@ st.markdown(
     /* ===== FORM LABELS & INPUTS ===== */
     [data-testid="stWidgetLabel"] label,
     [data-testid="stWidgetLabel"] label p,
+    [data-testid="stWidgetLabel"] p,
+    [data-testid="stWidgetLabel"] span,
     .stTextInput label,
-    .stTextInput label p {
+    .stTextInput label p,
+    .stMultiSelect label,
+    .stMultiSelect label p,
+    .stSelectbox label,
+    .stSelectbox label p,
+    .stTextArea label,
+    .stTextArea label p {
         color: #E2E8F0 !important;
+        -webkit-text-fill-color: #E2E8F0 !important;
         font-size: 0.9rem !important;
         font-weight: 600 !important;
         letter-spacing: 0.2px !important;
