@@ -80,16 +80,7 @@ _LOGIN_CSS = """
     margin: 3px;
 }
 
-/* ── LOGIN CARD ──────────────────────────────── */
-.login-card {
-    background: rgba(13,20,35,0.85);
-    border: 1px solid rgba(6,182,212,0.2);
-    border-radius: 24px;
-    padding: 32px 28px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    backdrop-filter: blur(20px);
-    width: 100%;
-}
+
 
 /* ── TABS: NO underline / NO bottom border anywhere ─ */
 .stTabs [data-baseweb="tab-list"] {
@@ -231,9 +222,7 @@ def render_login_page():
             unsafe_allow_html=True
         )
 
-        # ── Auth Card ────────────────────────────────────────────────────────
-        st.markdown('<div class="login-card">', unsafe_allow_html=True)
-
+        # ── Auth Tabs ────────────────────────────────────────────────────────
         tab1, tab2 = st.tabs(["🔑  LOGIN", "✨  REGISTER"])
 
         with tab1:
@@ -298,7 +287,6 @@ def render_login_page():
                     else:
                         login_user(reg_email, name=full_name)
 
-        st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown(
             """
