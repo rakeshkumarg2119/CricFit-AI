@@ -1,8 +1,9 @@
 import time
 import datetime
 import streamlit as st
-from config import PAGES
+from config import PAGES, ALLOWED_VIDEO_TYPES
 from utils.session import navigate_to, save_current_report
+from utils.helpers import format_file_size
 
 # ── Structured Yo-Yo IR1 Cricket Benchmarks ──────────────────────────────────
 YOYO_BENCHMARKS = {
@@ -145,9 +146,9 @@ def render_yoyo_page():
             <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 22px; height: 100%;">
                 <div style="font-size: 1.8rem; margin-bottom: 8px;">🫀</div>
                 <h4 style="color: #F8FAFC; margin: 0 0 6px 0; font-size: 1.05rem; font-weight: 700;">FITNESS OUTPUT</h4>
-                <p style="color: #F59E0B; font-size: 1.4rem; font-weight: 800; margin: 0 0 6px 0;">VO₂ Max &amp; Speed</p>
+                <p style="color: #F59E0B; font-size: 1.4rem; font-weight: 800; margin: 0 0 6px 0;">Endurance &amp; Fitness</p>
                 <p style="color: #94A3B8; font-size: 0.85rem; line-height: 1.5; margin: 0;">
-                    Estimates maximum oxygen consumption and aerobic stamina under high-intensity cricket demands.
+                    Measures aerobic endurance, Yo-Yo performance level, and overall fitness based on the analyzed test.
                 </p>
             </div>
             """,
@@ -159,7 +160,7 @@ def render_yoyo_page():
     # ── Interactive Quick Estimator Card ──────────────────────────────────────
     with st.container(border=True):
         st.subheader("⚡ Quick Yo-Yo Score Checker")
-        st.caption("Select a completed Yo-Yo test level to preview fitness category, estimated distance, shuttles, and VO₂ max:")
+        st.caption("Select a completed Yo-Yo test level to preview fitness category, estimated distance, shuttles, and fitness score:")
 
         col_input, col_result = st.columns([1, 1.2], gap="large")
 
@@ -172,42 +173,48 @@ def render_yoyo_page():
             )
             data = YOYO_BENCHMARKS.get(level, YOYO_BENCHMARKS["16.5 (National Squad Cutoff)"])
 
-            st.info(f"**Target Overview**\n\n{data['detail']}")
-
-            # Save report button
-            if st.button("💾 Log Yo-Yo Score to My Reports", key="btn_save_yoyo_report", use_container_width=True, type="primary"):
-                report_id = f"YY-{int(time.time()) % 100000:05d}"
-                report_entry = {
-                    "id": report_id,
-                    "activity": "Yo-Yo Test",
-                    "date_str": datetime.date.today().strftime("%b %d, %Y"),
-                    "overall_score": data["score_100"],
-                    "movement_quality": data["score_100"],
-                    "risk_level": "Low" if data["score_100"] >= 75 else ("Moderate" if data["score_100"] >= 60 else "High"),
-                    "metrics": {
-                        "balance": min(95, data["score_100"] + 2),
-                        "lower_body_stability": data["score_100"],
-                        "hip_mobility": min(90, data["score_100"] - 4),
-                        "core_stability": data["score_100"],
-                        "coordination": min(95, data["score_100"] + 5),
-                        "body_symmetry": 85,
-                        "movement_quality": data["score_100"],
-                    },
-                    "strengths": [
-                        {"title": "Aerobic Capacity", "desc": f"Recorded level {level} with estimated VO₂ max of {data['vo2_max']} mL/kg/min.", "priority": "High"},
-                        {"title": "Shuttle Endurance", "desc": f"Completed {data['shuttles']} shuttles ({data['distance_m']} meters) under standard pacing.", "priority": "Medium"},
-                    ],
-                    "areas_to_improve": [
-                        {"title": "Deceleration Recovery", "desc": "Focus on 180° turning mechanics to minimize braking torque on knees.", "priority": "High" if data["score_100"] < 80 else "Medium"}
-                    ],
-                    "ai_summary": f"Yo-Yo IR1 test performance evaluated at {level} ({data['distance_m']}m). Status: {data['status']}.",
-                    "recommendations": [
-                        {"title": "High-Intensity Interval Sprints", "prescription": "4 sets × 6 reps (30s sprint / 30s walk)", "difficulty": "Intermediate", "benefit": "Elevates VO₂ max ceiling and recovery rate."},
-                        {"title": "Shuttle Deceleration Drills", "prescription": "3 sets × 5 turns each leg", "difficulty": "Advanced", "benefit": "Improves plant leg stability during sharp directional turns."}
-                    ]
-                }
-                save_current_report(report_entry)
-                st.success(f"✅ Level {level} saved to your report history! (ID: {report_id})")
+            uploaded_file = st.file_uploader(
+                "UPLOAD YO-YO TEST VIDEO",
+                type=ALLOWED_VIDEO_TYPES,
+                key="yoyo_uploader",
+                help="Upload a video of your completed Yo-Yo test for analysis."
+            )
+            
+            if uploaded_file is not None:
+                st.markdown(
+                    f"""
+                    <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 16px; padding: 20px; margin: 20px 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <div>
+                                <span style="font-size: 0.75rem; color: #10B981; font-weight: 700;">✓ VIDEO READY</span>
+                                <h4 style="margin: 4px 0 0 0; color: #FFFFFF; font-size: 1.1rem;">{uploaded_file.name}</h4>
+                            </div>
+                            <span style="background: #1E293B; color: #94A3B8; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem;">
+                                Size: {format_file_size(uploaded_file.size)}
+                            </span>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                st.video(uploaded_file)
+                st.markdown("<br>", unsafe_allow_html=True)
+            else:
+                st.markdown(
+                    """
+                    <div style="border: 2px dashed rgba(255, 255, 255, 0.15); border-radius: 20px; padding: 30px; text-align: center; background: rgba(15, 23, 42, 0.4); margin-top: 10px; margin-bottom: 20px;">
+                        <div style="font-size: 2.5rem; margin-bottom: 10px;">📹</div>
+                        <h4 style="color: #F8FAFC; margin: 0 0 8px 0; font-size: 1.1rem;">Upload Yo-Yo Test Video</h4>
+                        <p style="color: #94A3B8; font-size: 0.85rem; margin: 0;">
+                            Upload a video of your completed Yo-Yo test for analysis.
+                        </p>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                
+            if st.button("ANALYZE YO-YO TEST", key="btn_analyze_yoyo", type="primary", use_container_width=True):
+                pass
 
         with col_result:
             data = YOYO_BENCHMARKS.get(level, YOYO_BENCHMARKS["16.5 (National Squad Cutoff)"])
@@ -226,6 +233,6 @@ def render_yoyo_page():
             m1, m2, m3 = st.columns(3)
             m1.metric("Distance", f"{data['distance_m']:,} m")
             m2.metric("Shuttles", str(data["shuttles"]))
-            m3.metric("Est. VO₂ Max", str(data["vo2_max"]))
+            m3.metric("Fitness Score", str(data["vo2_max"]))
 
             st.caption("Standard Yo-Yo IR1 Cricket Benchmark (Level 16.5 = National Baseline)")
