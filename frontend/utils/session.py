@@ -33,6 +33,15 @@ def navigate_to(page_name, activity=None):
     st.session_state.current_page = page_name
     if activity:
         st.session_state.selected_activity = activity
+    
+    # If an existing report does not match the newly selected activity, clear it
+    rep = st.session_state.get("analysis_result")
+    if rep:
+        current_rep_act = str(rep.get("activity", "")).lower()
+        if activity and current_rep_act != str(activity).lower():
+            st.session_state.analysis_result = None
+            st.session_state.uploaded_video = None
+            
     st.rerun()
 
 

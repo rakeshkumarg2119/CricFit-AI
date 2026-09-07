@@ -8,8 +8,12 @@ from pose capture and cadence counting so it can be tested/tuned on its own
 import numpy as np
 from scipy.signal import find_peaks
 
-from . import config
-from .signal_utils import smooth, segment_rate
+try:
+    from . import config
+    from .signal_utils import smooth, segment_rate
+except (ImportError, ValueError):
+    import config
+    from signal_utils import smooth, segment_rate
 
 
 def _refine_span(a, b, smoothed, timestamps, fps):

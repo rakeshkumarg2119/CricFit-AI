@@ -21,7 +21,10 @@ as steps (one footfall each).
 import numpy as np
 from scipy.signal import find_peaks
 
-from . import config
+try:
+    from . import config
+except (ImportError, ValueError):
+    import config
 
 
 def cadence_in_range(start_idx, end_idx, diff_series, timestamps, fps,

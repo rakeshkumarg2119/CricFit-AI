@@ -33,7 +33,7 @@ if exist "run_project.py" (
 :separate_windows
 echo.
 echo [1/2] Starting FastAPI backend on http://127.0.0.1:8000 ...
-start "CRICFIT AI - FastAPI Backend" cmd /k "title CRICFIT AI Backend && python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload"
+start "CRICFIT AI - FastAPI Backend" cmd /k "title CRICFIT AI Backend && python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload --reload-exclude ""backend/temp_uploads/*"" --reload-exclude ""backend/outputs/*"""
 
 echo [INFO] Waiting for FastAPI backend to initialize...
 timeout /t 3 /nobreak >nul

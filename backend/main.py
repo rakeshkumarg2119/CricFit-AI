@@ -39,6 +39,7 @@ from database import (
     save_raw_model_report,
     save_final_report,
     get_user_fitness_reports,
+    delete_fitness_report,
 )
 from injury_service import analyze as analyze_injury
 from groq_service import generate_llm_insights
@@ -82,7 +83,7 @@ def health_check():
 # Core Video Biomechanics & Groq Analysis Endpoint
 # ============================================================================
 @app.post("/analyze")
-async def analyze_video_endpoint(
+def analyze_video_endpoint(
     video: UploadFile = File(...),
     activity_type: str = Form("batting"),
     yoyo_level: Optional[str] = Form(None),
@@ -96,6 +97,7 @@ async def analyze_video_endpoint(
     4. Passes telemetry to Groq LLM (Plain-text insights, Drills, Food Plan).
     5. Generates printable PDF report.
     6. Returns structured response with text format, metrics, and media URLs.
+    Executed in FastAPI background threadpool to avoid blocking main event loop.
     """
     activity = activity_type.strip().lower()
     valid_activities = ["batting", "bowling", "yoyo", "yoyo_test"]
@@ -112,7 +114,7 @@ async def analyze_video_endpoint(
 
     try:
         with open(temp_path, "wb") as f:
-            content = await video.read()
+            content = video.file.read()
             f.write(content)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to process video upload: {e}")
@@ -196,18 +198,29 @@ async def analyze_video_endpoint(
 
 @app.get("/reports/{user_id}")
 def get_user_reports_endpoint(user_id: str, activity: Optional[str] = None):
-    """Retrieves all past fitness reports for a user."""
+    """Retrieves all past fitness reports for a user, sorted newest-first."""
     return get_user_fitness_reports(user_id=user_id, activity=activity)
+
+
+@app.delete("/reports/{user_id}/{report_id}")
+def delete_report_endpoint(user_id: str, report_id: str):
+    """Deletes a specific fitness report by its ID."""
+    deleted = delete_fitness_report(report_id=report_id, user_id=user_id)
+    if deleted:
+        return {"status": "deleted", "report_id": report_id}
+    raise HTTPException(status_code=404, detail="Report not found or not authorized to delete.")
 
 
 @app.get("/download/pdf/{report_id}")
 def download_pdf_endpoint(report_id: str):
     """Directly downloads a generated PDF report."""
-    filename = f"cricfit_report_{report_id}.pdf"
-    file_path = os.path.join(PDF_REPORTS_DIR, filename)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="PDF report not found.")
-    return FileResponse(file_path, media_type="application/pdf", filename=filename)
+    if os.path.exists(PDF_REPORTS_DIR):
+        for fname in os.listdir(PDF_REPORTS_DIR):
+            if report_id in fname and fname.endswith(".pdf"):
+                file_path = os.path.join(PDF_REPORTS_DIR, fname)
+                return FileResponse(file_path, media_type="application/pdf", filename=fname)
+    raise HTTPException(status_code=404, detail=f"PDF report for {report_id} not found.")
+
 
 
 # ============================================================================

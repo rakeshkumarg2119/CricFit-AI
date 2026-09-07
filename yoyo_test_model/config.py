@@ -4,12 +4,26 @@ against new footage (different camera distance/angle/fps), this is the only
 file that should need editing.
 """
 
+import os
+
 # --- pose landmark indices (MediaPipe Pose) ---
 LEFT_ANKLE, RIGHT_ANKLE = 27, 28
 LEFT_HIP, RIGHT_HIP = 23, 24
 LEFT_SHOULDER, RIGHT_SHOULDER = 11, 12
 
-DEFAULT_MODEL_PATH = "pose_landmarker_lite.task"
+_CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+_REPO_DIR = os.path.dirname(_CURRENT_DIR)
+
+_CANDIDATE_PATHS = [
+    os.path.join(_REPO_DIR, "pose_landmarker_lite.task"),
+    os.path.join(_REPO_DIR, "batting_model", "pose_landmarker_lite.task"),
+    os.path.join(_REPO_DIR, "batting_model", "pose_landmarker.task"),
+    os.path.join(_REPO_DIR, "bowling_model", "models", "pose_landmarker.task"),
+    os.path.join(_CURRENT_DIR, "pose_landmarker_lite.task"),
+    "pose_landmarker_lite.task",
+]
+DEFAULT_MODEL_PATH = next((p for p in _CANDIDATE_PATHS if os.path.exists(p)), "pose_landmarker_lite.task")
+
 
 # --- test-structure constants (fixed by the Yo-Yo IR1 protocol itself) ---
 SHUTTLE_LEG_M = 20.0          # one-way distance between the two lines

@@ -10,26 +10,26 @@ import streamlit as st
 from config import APP_NAME, APP_TAGLINE, PAGES
 from utils.session import init_session_state
 from components.navbar import render_navbar
-from components.sidebar import render_sidebar
 
-# Import Page Views
-from pages.login import render_login_page
-from pages.home import render_home_page
-from pages.batting import render_batting_page
-from pages.bowling import render_bowling_page
-from pages.yoyo import render_yoyo_page
-from pages.injury_detection import render_injury_detection_page
-from pages.reports import render_reports_page
-from pages.progress import render_progress_page
-from pages.profile import render_profile_page
+# Import Page Views (renamed from pages/ to views/ to prevent Streamlit auto-routing)
+from views.login import render_login_page
+from views.home import render_home_page
+from views.batting import render_batting_page
+from views.bowling import render_bowling_page
+from views.yoyo import render_yoyo_page
+from views.injury_detection import render_injury_detection_page
+from views.reports import render_reports_page
+from views.progress import render_progress_page
+from views.profile import render_profile_page
 
 # Page Configuration
 st.set_page_config(
     page_title=f"{APP_NAME} - {APP_TAGLINE}",
     page_icon="🏏",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
+
 
 # Dark Sports-Tech Design System Injection
 st.markdown(
@@ -306,15 +306,40 @@ st.markdown(
     ::-webkit-scrollbar-thumb { background: rgba(6,182,212,0.4); border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: #06B6D4; }
 
-    /* ===== HIDE STREAMLIT CHROME ===== */
+    /* ===== VIDEO PLAYER SIZING ===== */
+    [data-testid="stVideo"] {
+        max-width: 580px !important;
+        margin: 12px auto !important;
+        display: flex !important;
+        justify-content: center !important;
+    }
+    [data-testid="stVideo"] video {
+        max-height: 340px !important;
+        max-width: 100% !important;
+        border-radius: 14px !important;
+        object-fit: contain !important;
+        background: #000000 !important;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.5) !important;
+    }
+
+    /* ===== HIDE STREAMLIT CHROME & SIDEBAR ===== */
     #MainMenu { visibility: hidden; }
     footer { visibility: hidden; }
     header { visibility: hidden; }
     [data-testid="stDecoration"] { display: none; }
+    [data-testid="stSidebar"],
+    section[data-testid="stSidebar"],
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="collapsedControl"],
+    button[kind="header"] {
+        display: none !important;
+        width: 0 !important;
+    }
     </style>
     """,
     unsafe_allow_html=True
 )
+
 
 def main():
     """Main Application Entry Point."""
@@ -324,10 +349,10 @@ def main():
     if not st.session_state.logged_in:
         render_login_page()
     else:
-        render_sidebar()
         render_navbar()
         
         current_page = st.session_state.get("current_page", PAGES["HOME"])
+
         
         if current_page == PAGES["HOME"]:
             render_home_page()

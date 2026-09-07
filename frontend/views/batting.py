@@ -21,15 +21,16 @@ def render_batting_page():
     if st.button("← Back to Home", key="btn_batting_back_home", type="secondary"):
         navigate_to(PAGES["HOME"])
 
-    # Show report if already analyzed
-    if st.session_state.get("analysis_result") and st.session_state.get("selected_activity") == "batting":
+    # Show report if already analyzed for batting
+    rep = st.session_state.get("analysis_result")
+    if rep and str(rep.get("activity", "")).lower() == "batting":
         def reset_analysis():
             st.session_state.analysis_result = None
             st.session_state.uploaded_video = None
             st.rerun()
 
         try:
-            render_full_report_view(st.session_state.analysis_result, on_reset_callback=reset_analysis)
+            render_full_report_view(rep, on_reset_callback=reset_analysis)
         except Exception as e:
             st.error(f"⚠️ Error displaying analysis report: {e}")
             if st.button("🔄 Try Uploading Again", key="btn_err_reset_batting"):
@@ -81,10 +82,13 @@ def render_batting_page():
         </div>
         """)
 
-        st.video(uploaded_file)
+        col_v1, col_v2, col_v3 = st.columns([1, 2.2, 1])
+        with col_v2:
+            st.video(uploaded_file)
 
         if st.button("🚀 ANALYZE BATTING STROKE", key="btn_run_batting_analysis",
-                     type="primary", use_container_width=True):
+                     type="primary"):
+
             with st.status("🤖 Running AI Vision Shot Classifier, FastDTW Biomechanics & Groq AI...", expanded=True) as status:
                 st.write("Step 1/3: Extracting MediaPipe Pose Keypoints & Classifying Batting Stroke...")
                 success, report_data, err_msg = analyze_video(uploaded_file, activity_type="batting")
@@ -93,6 +97,7 @@ def render_batting_page():
                     status.update(label="✅ Analysis Complete!", state="complete", expanded=False)
                     st.session_state.analysis_result = report_data
                     st.session_state.selected_activity = "batting"
+                    st.session_state.uploaded_video = None
                     st.rerun()
                 else:
                     status.update(label="❌ Analysis Failed", state="error", expanded=True)

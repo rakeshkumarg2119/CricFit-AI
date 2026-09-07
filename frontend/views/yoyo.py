@@ -81,15 +81,16 @@ def render_yoyo_page():
     if st.button("← Back to Home", key="btn_yoyo_back_home", type="secondary"):
         navigate_to(PAGES["HOME"])
 
-    # Show report if already analyzed
-    if st.session_state.get("analysis_result") and st.session_state.get("selected_activity") == "yoyo":
+    # Show report if already analyzed for yoyo
+    rep = st.session_state.get("analysis_result")
+    if rep and str(rep.get("activity", "")).lower() in ("yoyo", "yoyo_test"):
         def reset_analysis():
             st.session_state.analysis_result = None
             st.session_state.uploaded_video = None
             st.rerun()
 
         try:
-            render_full_report_view(st.session_state.analysis_result, on_reset_callback=reset_analysis)
+            render_full_report_view(rep, on_reset_callback=reset_analysis)
         except Exception as e:
             st.error(f"⚠️ Error displaying analysis report: {e}")
             if st.button("🔄 Try Uploading Again", key="btn_err_reset_yoyo"):
@@ -142,11 +143,13 @@ def render_yoyo_page():
             if not is_valid:
                 st.error(msg)
             else:
-                st.session_state.uploaded_video = uploaded_file
-                st.video(uploaded_file)
+                col_v1, col_v2, col_v3 = st.columns([1, 2.2, 1])
+                with col_v2:
+                    st.video(uploaded_file)
 
                 if st.button("🚀 TRACK YO-YO CADENCE & RECOVERY", key="btn_run_yoyo_analysis",
-                             type="primary", use_container_width=True):
+                             type="primary"):
+
                     with st.status("🤖 Tracking Step Cadence, Turn Dynamics & Rest Compliance with Groq AI...", expanded=True) as status:
                         st.write("Step 1/3: Analyzing MediaPipe ankle bob & 20m sprint intervals...")
                         success, report_data, err_msg = analyze_video(

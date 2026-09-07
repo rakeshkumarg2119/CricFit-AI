@@ -25,7 +25,8 @@ def generate_pdf_report(report_data: dict) -> str:
     and returns the relative/absolute filepath.
     """
     report_id = report_data.get("id", f"REP-{uuid.uuid4().hex[:8].upper()}")
-    filename = f"cricfit_report_{report_id}.pdf"
+    activity_raw = str(report_data.get("activity", "cricket")).lower().replace(" ", "_")
+    filename = f"CricFit-AI_{activity_raw}_report_{report_id}.pdf"
     pdf_path = os.path.join(PDF_REPORTS_DIR, filename)
 
     doc = SimpleDocTemplate(
@@ -92,14 +93,21 @@ def generate_pdf_report(report_data: dict) -> str:
     story = []
 
     # --- Header Banner Table ---
-    activity = str(report_data.get("activity", "Cricket Biomechanics")).upper()
+    activity_raw = str(report_data.get("activity", "Cricket Biomechanics"))
+    activity_label_map = {
+        "batting": "Batting Analysis",
+        "bowling": "Bowling Analysis",
+        "yoyo": "Yo-Yo Endurance Test",
+        "yoyo_test": "Yo-Yo Endurance Test",
+    }
+    activity_display = activity_label_map.get(activity_raw.lower(), activity_raw.title())
     date_str = report_data.get("date_str", datetime.now().strftime("%d %b %Y, %I:%M %p"))
     overall_score = report_data.get("overall_score", 78)
     risk_level = report_data.get("risk_level", "Low")
 
     header_left = [
-        Paragraph("<b>CRICFIT AI — PERFORMANCE REPORT</b>", title_style),
-        Paragraph(f"Activity: <b>{activity}</b>  |  Report ID: {report_id}  |  Date: {date_str}", subtitle_style)
+        Paragraph(f"<b>CRICFIT AI — {activity_display.upper()} PERFORMANCE REPORT</b>", title_style),
+        Paragraph(f"Activity: <b>{activity_display}</b>  |  Report ID: {report_id}  |  Date: {date_str}", subtitle_style)
     ]
     
     score_badge = [

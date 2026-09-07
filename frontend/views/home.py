@@ -4,6 +4,8 @@ from utils.session import navigate_to
 
 # Card hover animation CSS (injected once at top of home page)
 _HOME_CSS = """
+
+
 <style>
 .activity-card {
     background: linear-gradient(145deg, rgba(15,23,42,0.92), rgba(30,41,59,0.85));
@@ -93,7 +95,7 @@ def render_home_page():
             """,
             unsafe_allow_html=True
         )
-        if st.button("🏏 START BATTING ANALYSIS", key="btn_home_batting", use_container_width=True, type="primary"):
+        if st.button("🏏 START BATTING ANALYSIS", key="btn_home_batting", type="primary"):
             navigate_to(PAGES["BATTING"], activity="batting")
 
     # BOWLING CARD
@@ -115,7 +117,7 @@ def render_home_page():
             """,
             unsafe_allow_html=True
         )
-        if st.button("🏃 START BOWLING ANALYSIS", key="btn_home_bowling", use_container_width=True, type="primary"):
+        if st.button("🏃 START BOWLING ANALYSIS", key="btn_home_bowling", type="primary"):
             navigate_to(PAGES["BOWLING"], activity="bowling")
 
     st.markdown("<br>", unsafe_allow_html=True)
@@ -141,7 +143,7 @@ def render_home_page():
             """,
             unsafe_allow_html=True
         )
-        if st.button("⏱️ START YOYO TEST", key="btn_home_yoyo", use_container_width=True, type="primary"):
+        if st.button("⏱️ START YOYO TEST", key="btn_home_yoyo", type="primary"):
             navigate_to(PAGES["YOYO"], activity="yoyo")
             
     # INJURY DETECTION CARD
@@ -163,13 +165,16 @@ def render_home_page():
             """,
             unsafe_allow_html=True
         )
-        if st.button("🩺 CHECK FOR INJURY", key="btn_home_injury", use_container_width=True, type="primary"):
+        if st.button("🩺 CHECK FOR INJURY", key="btn_home_injury", type="primary"):
             navigate_to(PAGES["INJURY_DETECTION"])
 
     st.markdown("<br>", unsafe_allow_html=True)
 
+
+
     # HOW IT WORKS — use st.columns so grid is guaranteed to render
     st.markdown(
+
         """
         <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.07);
                     border-radius: 20px; padding: 24px 28px 8px 28px; margin-top: 8px;">

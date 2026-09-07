@@ -31,9 +31,14 @@ import mediapipe as mp
 from mediapipe.tasks import python as mp_python
 from mediapipe.tasks.python import vision as mp_vision
 
-from . import config
-from .segmentation import segment_movement
-from .tracker import ShuttleCadenceTracker
+try:
+    from . import config
+    from .segmentation import segment_movement
+    from .tracker import ShuttleCadenceTracker
+except (ImportError, ValueError):
+    import config
+    from segmentation import segment_movement
+    from tracker import ShuttleCadenceTracker
 
 # Standard 33-point MediaPipe Pose connections, hardcoded - same fix the
 # notebook made: mp.solutions.pose.POSE_CONNECTIONS (legacy drawing_utils)

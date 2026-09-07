@@ -22,9 +22,14 @@ import mediapipe as mp
 from mediapipe.tasks import python as mp_python
 from mediapipe.tasks.python import vision as mp_vision
 
-from . import config
-from .segmentation import segment_movement
-from .report import build_report
+try:
+    from . import config
+    from .segmentation import segment_movement
+    from .report import build_report
+except (ImportError, ValueError):
+    import config
+    from segmentation import segment_movement
+    from report import build_report
 
 
 class ShuttleCadenceTracker:

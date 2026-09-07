@@ -1,4 +1,4 @@
-﻿# CricFit AI - Start both servers
+# CricFit AI - Start both servers
 # Run from the project root: .\start.ps1
 
 Write-Host "========================================" -ForegroundColor Cyan
@@ -7,14 +7,14 @@ Write-Host "========================================" -ForegroundColor Cyan
 
 # Start FastAPI backend in a new window
 Write-Host "`n[1/2] Starting FastAPI backend on http://127.0.0.1:8000 ..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'c:\Users\VARSHINI\hackathon'; python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot'; python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload --reload-exclude 'backend/temp_uploads/*' --reload-exclude 'backend/outputs/*'"
 
 # Give FastAPI a moment to boot
 Start-Sleep -Seconds 3
 
 # Start Streamlit frontend in a new window
 Write-Host "[2/2] Starting Streamlit frontend on http://localhost:8501 ..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd 'c:\Users\VARSHINI\hackathon'; streamlit run frontend/app.py"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot'; streamlit run frontend/app.py"
 
 Write-Host "`n[OK] Both services launched." -ForegroundColor Green
 Write-Host "   FastAPI  -> http://127.0.0.1:8000" -ForegroundColor White

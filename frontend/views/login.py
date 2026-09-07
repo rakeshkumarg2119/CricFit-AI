@@ -31,12 +31,12 @@ _LOGIN_CSS = """
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 16px 0 14px 0;
+    margin: 4px 0 6px 0;
 }
 .cricfit-logo-card {
-    width: 120px;
-    height: 120px;
-    border-radius: 22px;
+    width: 76px;
+    height: 76px;
+    border-radius: 18px;
     border: 2px solid rgba(6,182,212,0.65);
     background: #040e26;
     animation: pulse-glow 3s ease-in-out infinite;
@@ -54,7 +54,7 @@ _LOGIN_CSS = """
     height: 100%;
     object-fit: cover;
     object-position: center;
-    border-radius: 20px;
+    border-radius: 16px;
     display: block;
     margin: 0;
     padding: 0;
@@ -63,7 +63,7 @@ _LOGIN_CSS = """
 /* ── HERO TEXT ───────────────────────────────── */
 .cricfit-hero {
     text-align: center;
-    padding: 0 0 20px 0;
+    padding: 0;
     width: 100%;
 }
 
@@ -73,11 +73,11 @@ _LOGIN_CSS = """
     background: rgba(6,182,212,0.1);
     border: 1px solid rgba(6,182,212,0.25);
     color: #06B6D4;
-    padding: 5px 14px;
-    border-radius: 20px;
-    font-size: 0.78rem;
+    padding: 3px 10px;
+    border-radius: 16px;
+    font-size: 0.72rem;
     font-weight: 700;
-    margin: 3px;
+    margin: 2px;
 }
 
 
@@ -97,7 +97,7 @@ _LOGIN_CSS = """
     border: none !important;
     border-bottom: none !important;
     border-radius: 0 !important;
-    padding: 10px 24px !important;
+    padding: 6px 18px !important;
     margin-bottom: 0 !important;
     transition: color 0.2s ease !important;
     position: relative !important;
@@ -111,7 +111,7 @@ _LOGIN_CSS = """
 .stTabs [data-baseweb="tab"] * {
     color: #CBD5E1 !important;
     font-weight: bold !important;
-    font-size: 0.9rem !important;
+    font-size: 0.85rem !important;
     background: none !important;
     -webkit-text-fill-color: #CBD5E1 !important;
     text-shadow: none !important;
@@ -148,7 +148,7 @@ _LOGIN_CSS = """
     border: none !important;
 }
 .stTabs [data-baseweb="tab-panel"] {
-    padding-top: 20px !important;
+    padding-top: 10px !important;
 }
 /* Nuke ALL Streamlit tab indicator elements */
 .stTabs [data-baseweb="tab-highlight"],
@@ -180,39 +180,38 @@ def render_login_page():
     """Render Login & Register authentication interface."""
     st.markdown(_LOGIN_CSS, unsafe_allow_html=True)
 
-    # ── Centered 3-column layout ────────────────────────────────────────────
-    c1, c_mid, c2 = st.columns([1, 2.5, 1])
+    # ── Centered 3-column layout with compact width ──────────────────────────
+    c1, c_mid, c2 = st.columns([1.2, 2.0, 1.2])
     with c_mid:
         # ── Hero: logo + title + badges in ONE block for guaranteed centering ──
         b64 = _logo_b64()
         logo_img = (
             f'<div class="cricfit-logo-card">'
             f'<img src="data:image/jpeg;base64,{b64}" class="cricfit-logo-img" '
-            f'style="width:100%;height:100%;object-fit:cover;object-position:center;border-radius:20px;display:block;margin:0;padding:0;" '
             f'alt="CricFit AI Logo" />'
             f'</div>'
-        ) if b64 else '<div style="font-size:4rem;">🏏</div>'
+        ) if b64 else '<div style="font-size:2.8rem;">🏏</div>'
 
         st.markdown(
             f"""
-            <div style="width:100%;text-align:center;padding:16px 0 20px 0;">
-                <div class="cricfit-logo-wrap" style="display:flex; justify-content:center; align-items:center; width:100%; margin-bottom:14px;">
+            <div style="width:100%;text-align:center;padding:4px 0 10px 0;">
+                <div class="cricfit-logo-wrap">
                     {logo_img}
                 </div>
-                <h1 style="font-size:3rem;font-weight:900;margin:0 0 4px 0;letter-spacing:-1px;
+                <h1 style="font-size:2.1rem;font-weight:900;margin:0 0 2px 0;letter-spacing:-0.5px;
                            background:linear-gradient(100deg,#FFFFFF 30%,#06B6D4 100%);
                            -webkit-background-clip:text;-webkit-text-fill-color:transparent;">
                     {APP_NAME}
                 </h1>
-                <p style="font-size:0.95rem;color:#06B6D4;font-weight:700;margin:6px 0 4px 0;
-                          text-transform:uppercase;letter-spacing:2px;-webkit-text-fill-color:#06B6D4;">
+                <p style="font-size:0.8rem;color:#06B6D4;font-weight:700;margin:3px 0 2px 0;
+                          text-transform:uppercase;letter-spacing:1.5px;-webkit-text-fill-color:#06B6D4;">
                     {APP_TAGLINE}
                 </p>
-                <p style="font-size:0.88rem;color:#94A3B8;font-weight:500;margin:0 0 14px 0;
+                <p style="font-size:0.78rem;color:#94A3B8;font-weight:500;margin:0 0 8px 0;
                           -webkit-text-fill-color:#94A3B8;">
                     {SECONDARY_TAGLINE}
                 </p>
-                <div style="margin-bottom:4px;">
+                <div style="margin-bottom:2px;">
                     <span class="feature-pill">🧠 AI Pose Estimation</span>
                     <span class="feature-pill">📊 Biomechanical Metrics</span>
                     <span class="feature-pill">💪 Real-time Analysis</span>
@@ -228,7 +227,7 @@ def render_login_page():
         with tab1:
             st.markdown(
                 """
-                <p style="color:#CBD5E1; font-size:0.92rem; font-weight:500; margin-bottom:12px;">
+                <p style="color:#94A3B8; font-size:0.82rem; font-weight:500; margin-bottom:8px; text-align:center;">
                     Sign in to your CricFit AI athlete account.
                 </p>
                 """,
@@ -261,7 +260,7 @@ def render_login_page():
         with tab2:
             st.markdown(
                 """
-                <p style="color:#CBD5E1; font-size:0.92rem; font-weight:500; margin-bottom:12px;">
+                <p style="color:#94A3B8; font-size:0.82rem; font-weight:500; margin-bottom:8px; text-align:center;">
                     Create your athlete account and start analyzing.
                 </p>
                 """,
@@ -287,10 +286,9 @@ def render_login_page():
                     else:
                         login_user(reg_email, name=full_name)
 
-
         st.markdown(
             """
-            <div style="text-align:center; margin-top:18px; font-size:0.78rem; color:#64748B; line-height:1.6;">
+            <div style="text-align:center; margin-top:10px; font-size:0.72rem; color:#64748B; line-height:1.4;">
                 <span style="color:#475569;">CricFit AI · AI-Powered Cricket Fitness Analysis</span>
             </div>
             """,

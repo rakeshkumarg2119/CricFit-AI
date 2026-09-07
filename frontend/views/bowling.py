@@ -21,15 +21,16 @@ def render_bowling_page():
     if st.button("← Back to Home", key="btn_bowling_back_home", type="secondary"):
         navigate_to(PAGES["HOME"])
 
-    # Show report if already analyzed
-    if st.session_state.get("analysis_result") and st.session_state.get("selected_activity") == "bowling":
+    # Show report if already analyzed for bowling
+    rep = st.session_state.get("analysis_result")
+    if rep and str(rep.get("activity", "")).lower() == "bowling":
         def reset_analysis():
             st.session_state.analysis_result = None
             st.session_state.uploaded_video = None
             st.rerun()
 
         try:
-            render_full_report_view(st.session_state.analysis_result, on_reset_callback=reset_analysis)
+            render_full_report_view(rep, on_reset_callback=reset_analysis)
         except Exception as e:
             st.error(f"⚠️ Error displaying analysis report: {e}")
             if st.button("🔄 Try Uploading Again", key="btn_err_reset_bowling"):
@@ -80,10 +81,13 @@ def render_bowling_page():
         </div>
         """)
 
-        st.video(uploaded_file)
+        col_v1, col_v2, col_v3 = st.columns([1, 2.2, 1])
+        with col_v2:
+            st.video(uploaded_file)
 
         if st.button("🚀 ANALYZE BOWLING ACTION", key="btn_run_bowling_analysis",
-                     type="primary", use_container_width=True):
+                     type="primary"):
+
             with st.status("🤖 Evaluating Bowling Action, Matching Pro Bowlers & Querying Groq AI...", expanded=True) as status:
                 st.write("Step 1/3: Verifying bowling action & delivery stride mechanics...")
                 success, report_data, err_msg = analyze_video(uploaded_file, activity_type="bowling")
@@ -92,6 +96,7 @@ def render_bowling_page():
                     status.update(label="✅ Analysis Complete!", state="complete", expanded=False)
                     st.session_state.analysis_result = report_data
                     st.session_state.selected_activity = "bowling"
+                    st.session_state.uploaded_video = None
                     st.rerun()
                 else:
                     status.update(label="❌ Analysis Failed", state="error", expanded=True)

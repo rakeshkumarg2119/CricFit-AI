@@ -115,7 +115,7 @@ def get_user_fitness_reports(user_id: str = "anonymous", activity: Optional[str]
             query = {"user_id": user_id}
             if activity:
                 query["activity"] = activity.lower()
-            reports = list(db.fitness_reports.find(query).sort("timestamp", -1))
+            reports = list(db.fitness_reports.find(query).sort("saved_at", -1))
             for r in reports:
                 r["_id"] = str(r["_id"])
             return reports
@@ -127,3 +127,32 @@ def get_user_fitness_reports(user_id: str = "anonymous", activity: Optional[str]
     if activity:
         results = [r for r in results if r.get("activity") == activity.lower()]
     return list(reversed(results))
+
+
+def delete_fitness_report(report_id: str, user_id: str = "anonymous") -> bool:
+    """Deletes a fitness report by its report ID. Returns True if deleted."""
+    db = get_db()
+    if db is not None:
+        try:
+            from bson import ObjectId
+            # Try deleting by MongoDB _id first
+            try:
+                result = db.fitness_reports.delete_one({"_id": ObjectId(report_id), "user_id": user_id})
+                if result.deleted_count > 0:
+                    return True
+            except Exception:
+                pass
+            # Also try deleting by the report's own `id` field
+            result = db.fitness_reports.delete_one({"id": report_id, "user_id": user_id})
+            return result.deleted_count > 0
+        except Exception as e:
+            print(f"[WARN] Failed to delete fitness report from MongoDB: {e}")
+
+    # Fallback: remove from in-memory list
+    global _local_fitness_reports
+    original_len = len(_local_fitness_reports)
+    _local_fitness_reports = [
+        r for r in _local_fitness_reports
+        if not (r.get("user_id") == user_id and (str(r.get("id", "")) == report_id or str(r.get("_id", "")) == report_id))
+    ]
+    return len(_local_fitness_reports) < original_len

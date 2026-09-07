@@ -6,8 +6,12 @@ frame by frame and returns the finalized report.
 
 import cv2
 
-from . import config
-from .tracker import ShuttleCadenceTracker
+try:
+    from . import config
+    from .tracker import ShuttleCadenceTracker
+except (ImportError, ValueError):
+    import config
+    from tracker import ShuttleCadenceTracker
 
 
 def analyze_video_file(video_path: str, manual_input: dict, reference: dict = None,

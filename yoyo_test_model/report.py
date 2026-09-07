@@ -13,9 +13,14 @@ from datetime import datetime, timezone
 
 import numpy as np
 
-from . import config
-from .cadence import cadence_in_range
-from .yoyo_protocol import lookup_level_reference
+try:
+    from . import config
+    from .cadence import cadence_in_range
+    from .yoyo_protocol import lookup_level_reference
+except (ImportError, ValueError):
+    import config
+    from cadence import cadence_in_range
+    from yoyo_protocol import lookup_level_reference
 
 
 def build_report(legs, ankle_diff_series, body_scale_series, timestamps, fps,

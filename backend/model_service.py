@@ -118,32 +118,62 @@ def analyze_bowling(video_path: str, generate_video: bool = True) -> tuple:
         os.chdir(orig_cwd)
 
 
-def analyze_yoyo(video_path: str, manual_input: dict = None, reference: dict = None) -> tuple:
+def analyze_yoyo(video_path: str, manual_input: dict = None, reference: dict = None, generate_video: bool = True) -> tuple:
     """
     Runs Yo-Yo shuttle cadence tracking and 10s rest compliance verification.
-    Returns: (raw_report_dict, None)
+    Returns: (raw_report_dict, annotated_video_path_or_None)
     """
-    _init_yoyo()
     manual_input = manual_input or {"yoyo_level": "16.5"}
     reference = reference or {"target_board": "BCCI", "target_yoyo_score": 16.5}
 
-    orig_cwd = os.getcwd()
     yoyo_dir = os.path.join(PROJECT_ROOT, "yoyo_test_model")
+    if yoyo_dir not in sys.path:
+        sys.path.insert(0, yoyo_dir)
+
     try:
-        os.chdir(yoyo_dir)
+        import yoyo_test_model.video_pipeline as yoyo_pipeline
+        import yoyo_test_model.annotated_video as yoyo_annotated
+    except (ImportError, ValueError):
         import video_pipeline as yoyo_pipeline
-        
-        # Point to pose landmarker
+        import annotated_video as yoyo_annotated
+
+    # Locate pose landmarker model
+    pose_model_path = os.path.join(PROJECT_ROOT, "pose_landmarker_lite.task")
+    if not os.path.exists(pose_model_path):
+        pose_model_path = os.path.join(PROJECT_ROOT, "batting_model", "pose_landmarker_lite.task")
+    if not os.path.exists(pose_model_path):
         pose_model_path = os.path.join(PROJECT_ROOT, "batting_model", "pose_landmarker.task")
-        if not os.path.exists(pose_model_path):
-            pose_model_path = os.path.join(yoyo_dir, "pose_landmarker_lite.task")
-            
+    if not os.path.exists(pose_model_path):
+        pose_model_path = os.path.join(yoyo_dir, "pose_landmarker_lite.task")
+
+    annotated_video_path = None
+    if generate_video:
+        out_filename = f"yoyo_annotated_{uuid.uuid4().hex[:8]}.mp4"
+        out_path = os.path.join(VIDEOS_DIR, out_filename)
+        try:
+            h264_path, report = yoyo_annotated.generate_annotated_video(
+                video_path=video_path,
+                output_path=out_path,
+                manual_input=manual_input,
+                reference=reference,
+                model_path=pose_model_path
+            )
+            annotated_video_path = h264_path if h264_path and os.path.exists(h264_path) else out_path
+        except Exception as e:
+            print(f"[WARN] Yo-Yo video annotation failed: {e}. Falling back to report only.")
+            report = yoyo_pipeline.analyze_video_file(
+                video_path=video_path,
+                manual_input=manual_input,
+                reference=reference,
+                model_path=pose_model_path
+            )
+    else:
         report = yoyo_pipeline.analyze_video_file(
             video_path=video_path,
             manual_input=manual_input,
             reference=reference,
             model_path=pose_model_path
         )
-        return report, None
-    finally:
-        os.chdir(orig_cwd)
+    return report, annotated_video_path
+
+

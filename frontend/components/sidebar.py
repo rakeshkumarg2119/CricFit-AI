@@ -89,22 +89,22 @@ def render_sidebar():
         current_page = st.session_state.get("current_page", PAGES["HOME"])
 
         nav_options = [
-            ("🏠  Home", PAGES["HOME"]),
-            ("🏏  Batting Analysis", PAGES["BATTING"]),
-            ("🏃  Bowling Analysis", PAGES["BOWLING"]),
-            ("⏱️  Yo-Yo Test", PAGES["YOYO"]),
-            ("🩺  Injury Detection", PAGES["INJURY_DETECTION"]),
-            ("📊  My Reports", PAGES["REPORTS"]),
-            ("📈  Progress Tracking", PAGES["PROGRESS"]),
-            ("👤  Profile", PAGES["PROFILE"]),
+            ("🏠  Home", PAGES["HOME"], None),
+            ("🏏  Batting Analysis", PAGES["BATTING"], "batting"),
+            ("🏃  Bowling Analysis", PAGES["BOWLING"], "bowling"),
+            ("⏱️  Yo-Yo Test", PAGES["YOYO"], "yoyo"),
+            ("🩺  Injury Detection", PAGES["INJURY_DETECTION"], None),
+            ("📊  My Reports", PAGES["REPORTS"], None),
+            ("📈  Progress Tracking", PAGES["PROGRESS"], None),
+            ("👤  Profile", PAGES["PROFILE"], None),
         ]
 
-        for label, page_key in nav_options:
+        for label, page_key, act in nav_options:
             is_active = current_page == page_key
             btn_type = "primary" if is_active else "secondary"
             if st.button(label, key=f"nav_{page_key}",
                          use_container_width=True, type=btn_type):
-                navigate_to(page_key)
+                navigate_to(page_key, activity=act)
 
         st.markdown(
             """<hr style="border:0;height:1px;
