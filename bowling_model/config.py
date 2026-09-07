@@ -2,8 +2,9 @@
 settings, and the player -> bowling style label mapping."""
 import os
 
-MODELS_DIR = "models"
-DATA_DIR = "data"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODELS_DIR = os.path.join(BASE_DIR, "models")
+DATA_DIR = os.path.join(BASE_DIR, "data")
 CACHE_DIR = os.path.join(DATA_DIR, "cache")
 os.makedirs(MODELS_DIR, exist_ok=True)
 os.makedirs(CACHE_DIR, exist_ok=True)

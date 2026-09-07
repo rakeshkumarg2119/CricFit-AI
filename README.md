@@ -1,136 +1,96 @@
-<div align="center">
-  <img src="cricfit_ai_logo.png" alt="CricFit AI Logo" width="500" height="500"/>
-  <h1>CricFit AI 🏏</h1>
-  <p><em>AI-Powered Biomechanics & Fitness Analysis for Cricketers</em></p>
-</div>
+# CricFit AI - temporary test backend
 
----
+This is a throwaway backend, only for you to test the batting, bowling, and
+Yo-Yo pipelines yourself while your teammate's real backend isn't ready yet.
+Once the real backend exists, this folder can be deleted or handed over as a
+reference for how the three modules wire together.
 
-## 🌟 Overview
+## Folder layout expected
 
-**CricFit AI** is an intelligent video-analysis platform that helps cricketers assess and improve their physical performance. Users log in, upload a **batting** or **bowling** video, and our AI pipeline analyzes body mechanics to generate a structured fitness report — covering balance, stability, flexibility, and more. Reports are stored in MongoDB and enriched by **Grok AI**, which turns raw metrics into actionable, motivating feedback. On repeat uploads, CricFit AI compares the new report against the user's history to track real improvement over time.
-
----
-
-## ✨ Features
-
-- **🎥 Video Upload & Analysis:** Users upload bowling or batting footage directly from the Streamlit frontend.
-- **🤖 Custom Keras Models:** Separate deep-learning models trained specifically for batting and bowling action analysis.
-- **🦴 Pose Estimation Engine:** Extracts body keypoints from video frames to power all biomechanical metrics.
-- **📊 7-Point Fitness Report:** Every analysis scores the athlete across:
-  - ⚖️ Balance
-  - 🦵 Lower-body stability
-  - 🧘 Flexibility / mobility
-  - 💪 Core stability
-  - ⚡ Agility
-  - 🎯 Coordination
-  - ↔️ Body symmetry
-  - 🏃 Movement quality
-- **🧠 Grok AI Coaching Layer:** Converts raw scores into personalized exercise recommendations and boosting/motivational messages.
-- **📈 Progress Tracking:** On repeat uploads, current and historical reports are both sent to Grok AI to generate an improvement summary and updated fitness tips.
-- **🏆 Bowling Action Match (Bowling-only):** Compares the user's bowling action against professional players (e.g. Jasprit Bumrah) and reports a closeness/match score, alongside improvement guidance.
-- **🗄️ MongoDB Report History:** All reports are persisted per user, enabling longitudinal progress comparisons.
-
----
-
-## 🛠️ Tech Stack
-
-- **Frontend:** Streamlit (login, video upload, report display)
-- **Backend:** Python, FastAPI
-- **AI Models:** TensorFlow / Keras (custom-trained batting & bowling models, trained in Jupyter Notebook)
-- **Pose Estimation:** MediaPipe
-- **LLM Coaching:** Grok AI (exercise recommendations, improvement & boosting messages)
-- **Database:** MongoDB (user auth, report storage, historical comparisons)
-- **Computer Vision:** OpenCV
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Python 3.10+
-- MongoDB (local or Atlas)
-- Grok AI API Key
-
-### Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/<org>/CricFit-AI.git
-   cd CricFit-AI
-   ```
-
-2. **Create and activate a virtual environment:**
-   ```bash
-   python -m venv venv
-   # Windows
-   venv\Scripts\activate
-   # Linux/Mac
-   source venv/bin/activate
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Environment Variables:**
-   Create a `.env` file based on `.env.example`:
-   ```env
-   GROK_API_KEY=your_key_here
-   MONGODB_URI=your_mongodb_connection_string
-   MODEL_PATH_BATTING=models/batting_model.h5
-   MODEL_PATH_BOWLING=models/bowling_model.h5
-   ```
-
-5. **Run the FastAPI backend:**
-   ```bash
-   uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-   ```
-
-6. **Run the Streamlit frontend:**
-   ```bash
-   streamlit run app.py
-   ```
-
----
-
-## 🔄 Analysis Workflow
-
-```text
-1. User logs in via Streamlit
-2. User uploads batting/bowling video
-3. Pose estimation extracts body keypoints frame-by-frame
-4. Keras model (batting/bowling specific) scores the 7 fitness metrics
-5. Report saved to MongoDB (linked to user)
-6. Report sent to Grok AI → generates exercises + boosting message
-7. [Bowling only] Action compared against pro player reference → match score
-8. On next upload:
-   → Previous + current report sent to Grok AI
-   → Grok AI returns improvement summary + updated fitness tips
-9. Final report returned to user via Streamlit
+```
+CricFit AI/
+├── batting_model/          (as-is from Colab export)
+├── bowling_model/          (as-is from Colab export)
+├── yoyo_test_model/        (the module Claude built earlier)
+└── temp_test_backend/      (this folder)
 ```
 
----
+All four folders must be siblings, at the same level, for the imports in
+`main.py` to resolve.
 
-## 👥 Team
+## Setup
 
-| Member                  | Responsibility                                              |
-|--------------------------|--------------------------------------------------------------|
-| Varshini                 | Frontend                                                     |
-| Siva Dharshana            | Backend                                                       |
-| Kavya                     | Frontend–Backend integration, dataset collection (batting)   |
-| Mithun Maharajan K        | Batting model training (Keras)                                |
-| Rakesh Kumar G             | Bowling model training (Keras)                                |
-| Sudherson                 | Pose estimation calculation, dataset collection (bowling)     |
+```bash
+cd temp_test_backend
+pip install -r requirements.txt
+cp .env.example .env        # then paste your real GROQ_API_KEY in when you have one
+uvicorn main:app --reload --port 8000
+```
 
----
+First startup will be slow - it loads 5 Keras models (batting classifier,
+bowling action-filter/arm/pace classifiers) plus 3 MediaPipe pose models.
 
-## 🔮 Future Improvements
+**ffmpeg is also required** (for the annotated-video output below) - it must
+be installed and on your system PATH. Without it, `/analyze` endpoints still
+return the JSON report/tips fine, just with `annotated_video_url: null`.
 
-- **🏏 Live Match Ball Prediction:** Predict live delivery outcomes in real time — bowler-favored (wicket, dot ball) vs batter-favored (four, six, run) — factoring in pitch conditions.
-- **🏟️ Cricket Coaching Center Deployment:** Package CricFit AI as a B2B analysis tool for cricket coaching academies to track and train multiple athletes at scale.
+## Endpoints to test with Postman / your frontend
 
----
+| Endpoint | Method | Body | Notes |
+|---|---|---|---|
+| `/health` | GET | - | Confirms server is up |
+| `/api/batting/analyze` | POST | form-data: `video` | Shot classification + Stage 2 report |
+| `/api/bowling/analyze` | POST | form-data: `video` | Action classification + closest-pro-match |
+| `/api/yoyo/analyze` | POST | form-data: `video`, `yoyo_level` (required, e.g. `"16.3"`), `target_score` (optional), `target_board` (optional) | Cadence + protocol-compliance report |
+| `/api/tips` | POST | json: `{"report": {...}, "sport": "batting"}` | Sends any report JSON to Groq for tips text |
 
-<p align="center">Building better cricketers with AI and Biomechanics. 🏏⚙️</p>
+Every `/analyze` call automatically sends its report to Groq and returns the
+tips inline under a `"tips"` key in the same response - no extra flag needed.
+
+## Annotated (skeleton-overlay) video
+
+Every `/analyze` call also renders a video with the MediaPipe pose overlay
+plus a side report panel, saved on disk under
+`temp_test_backend/analyzed_videos/<sport>/<random-id>.mp4`, and served back
+statically. The response includes:
+
+```json
+"annotated_video_url": "http://127.0.0.1:8000/analyzed_videos/batting/ab12cd34.mp4"
+```
+
+Paste that URL into a browser tab (or Postman's response Preview) to watch
+it directly. Batting and bowling reuse their own existing
+`generate_annotated_report_video()`/`generate_annotated_video()` functions.
+The yoyo module didn't have an annotated-video function before, so a new
+file was added - `yoyo_test_model/annotated_video.py` - that draws the
+skeleton + a shuttle-count/cadence-trend panel; it doesn't touch
+`tracker.py` or `video_pipeline.py`.
+
+If `annotated_video_url` comes back `null`, check `annotated_video_note` in
+the same response - it'll say whether ffmpeg is missing or rendering failed,
+without blocking the JSON report/tips you already got.
+
+## Groq testing
+
+You said you don't have the key yet - the wiring (`groq_client.py`) is done
+and ready. Until `GROQ_API_KEY` is set in `.env`, the `"tips"` field on
+every response will be:
+
+```json
+{"error": "GROQ_API_KEY is not set. Add it to your .env file (copy .env.example) and restart the server."}
+```
+
+so you'll see clearly whether it's a missing-key issue or an actual API
+error once you drop your real key in. It never crashes the batting/bowling/
+yoyo endpoints themselves - the rest of the report still comes back fine,
+just with that `error` field inside `"tips"` until the key is in place.
+
+## Known constraints
+
+- Heavy install: `tensorflow` + `mediapipe` are large - first `pip install`
+  will take a while.
+- `bowling_model`'s config hardcodes its own `models/`/`data/` paths
+  relative to its own folder - `main.py` already handles this by switching
+  directory briefly on import, so you don't need to touch it.
+- This backend has no database, no auth, and no real error-recovery. It is
+  for local testing only.

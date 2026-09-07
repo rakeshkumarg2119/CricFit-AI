@@ -10,6 +10,7 @@ from mediapipe.tasks import python as mp_python
 from mediapipe.tasks.python import vision as mp_vision
 from pose_utils import compute_frame_angles
 from config import LM, ANGLE_NAMES, POSE_MODEL_PATH
+IMAGE_DATASET_DIR = os.environ.get("BOWLING_IMAGE_DATASET_DIR", "data/images")
 
 POSITIVE_PREFIX = "Bowling_action"
 NEGATIVE_PREFIX = "batting_stance"
@@ -21,14 +22,21 @@ _image_options = mp_vision.PoseLandmarkerOptions(
     min_pose_detection_confidence=0.4,
 )
 
+_shared_image_landmarker = None
+
+def _get_image_landmarker():
+    global _shared_image_landmarker
+    if _shared_image_landmarker is None:
+        _shared_image_landmarker = mp_vision.PoseLandmarker.create_from_options(_image_options)
+    return _shared_image_landmarker
+
 def extract_image_angle_features(image_path):
     img = cv2.imread(image_path)
     if img is None:
         return None
     rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
-    with mp_vision.PoseLandmarker.create_from_options(_image_options) as landmarker:
-        res = landmarker.detect(mp_image)
+    res = _get_image_landmarker().detect(mp_image)
     if not res.pose_landmarks:
         return None
     lm = res.pose_landmarks[0]
@@ -60,5 +68,3 @@ def index_action_dataset(image_dataset_dir=IMAGE_DATASET_DIR, max_per_class=1500
     random.shuffle(pos_paths)
     random.shuffle(neg_paths)
     return pos_paths[:max_per_class], neg_paths[:max_per_class]
-
-

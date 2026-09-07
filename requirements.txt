@@ -1,0 +1,16 @@
+# --- server ---
+fastapi
+uvicorn[standard]
+python-multipart
+python-dotenv
+requests
+
+# --- shared by batting / bowling / yoyo pipelines ---
+tensorflow
+mediapipe
+opencv-python-headless
+fastdtw
+scipy
+numpy
+scikit-learn
+joblib
