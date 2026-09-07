@@ -1,0 +1,8 @@
+tensorflow
+mediapipe
+opencv-python
+numpy
+scikit-learn
+fastdtw
+scipy
+joblib
