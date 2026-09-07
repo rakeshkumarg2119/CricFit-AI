@@ -18,13 +18,41 @@ OUTPUTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "outputs"
 PDF_REPORTS_DIR = os.path.join(OUTPUTS_DIR, "reports")
 os.makedirs(PDF_REPORTS_DIR, exist_ok=True)
 
+_PDF_UNICODE_REPLACEMENTS = {
+    "\u2013": "-",    # en-dash –
+    "\u2014": "-",    # em-dash —
+    "\u2018": "'",    # left single quote
+    "\u2019": "'",    # right single quote
+    "\u201c": '"',    # left double quote
+    "\u201d": '"',    # right double quote
+    "\u00b0": " deg", # degree sign °
+    "\u2026": "...",  # ellipsis …
+    "\u2192": "->",   # right arrow →
+}
+
+def _sanitize_for_pdf(obj):
+    """
+    Recursively converts Unicode punctuation Helvetica can't render
+    into safe ASCII equivalents. Works on strings, dicts, and lists;
+    everything else (int, float, None, bool) passes through unchanged.
+    """
+    if isinstance(obj, str):
+        for uni_char, ascii_equiv in _PDF_UNICODE_REPLACEMENTS.items():
+            obj = obj.replace(uni_char, ascii_equiv)
+        return obj
+    elif isinstance(obj, dict):
+        return {k: _sanitize_for_pdf(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_sanitize_for_pdf(v) for v in obj]
+    else:
+        return obj
 
 def generate_pdf_report(report_data: dict) -> str:
     """
     Generates a beautifully structured PDF document from the enriched analysis report
     and returns the relative/absolute filepath.
     """
-    report_id = report_data.get("id", f"REP-{uuid.uuid4().hex[:8].upper()}")
+    report_id = _sanitize_for_pdf(report_data.get("id", f"REP-{uuid.uuid4().hex[:8].upper()}"))
     activity_raw = str(report_data.get("activity", "cricket")).lower().replace(" ", "_")
     filename = f"CricFit-AI_{activity_raw}_report_{report_id}.pdf"
     pdf_path = os.path.join(PDF_REPORTS_DIR, filename)
@@ -35,7 +63,9 @@ def generate_pdf_report(report_data: dict) -> str:
         leftMargin=40,
         rightMargin=40,
         topMargin=36,
-        bottomMargin=36
+        bottomMargin=36,
+        title=f"CricFit AI — {activity_raw} Report ({report_id})",
+        author="CricFit AI"
     )
 
     styles = getSampleStyleSheet()
@@ -101,9 +131,9 @@ def generate_pdf_report(report_data: dict) -> str:
         "yoyo_test": "Yo-Yo Endurance Test",
     }
     activity_display = activity_label_map.get(activity_raw.lower(), activity_raw.title())
-    date_str = report_data.get("date_str", datetime.now().strftime("%d %b %Y, %I:%M %p"))
-    overall_score = report_data.get("overall_score", 78)
-    risk_level = report_data.get("risk_level", "Low")
+    date_str = _sanitize_for_pdf(report_data.get("date_str", datetime.now().strftime("%d %b %Y, %I:%M %p")))
+    overall_score = _sanitize_for_pdf(report_data.get("overall_score", 78))
+    risk_level = _sanitize_for_pdf(report_data.get("risk_level", "Low"))
 
     header_left = [
         Paragraph(f"<b>CRICFIT AI — {activity_display.upper()} PERFORMANCE REPORT</b>", title_style),
@@ -131,7 +161,7 @@ def generate_pdf_report(report_data: dict) -> str:
 
     # --- Section 1: Everyday AI Analysis & Plain Language Breakdown ---
     story.append(Paragraph("1. ATHLETE PERFORMANCE & TECHNICAL SUMMARY", section_heading))
-    summary_text = report_data.get("ai_summary", "Detailed assessment performed.")
+    summary_text = _sanitize_for_pdf(report_data.get("ai_summary", "Detailed assessment performed."))
     story.append(Paragraph(summary_text, body_style))
     story.append(Spacer(1, 8))
 
@@ -142,7 +172,7 @@ def generate_pdf_report(report_data: dict) -> str:
         story.append(Paragraph(f"<b>Identified Stroke:</b> {shot_lbl} (AI Confidence: {shot_conf}%)", body_bold))
     elif "closest_pro_match" in report_data:
         pro_name = report_data["closest_pro_match"].get("player", "Reference Bowler")
-        arm_pace = f"{report_data.get('arm_classification', {}).get('label', '')} {report_data.get('pace_classification', {}).get('label', '')}".title()
+        arm_pace = f"{_sanitize_for_pdf(report_data.get('arm_classification', {}).get('label', ''))} {_sanitize_for_pdf(report_data.get('pace_classification', {}).get('label', ''))}".title()
         story.append(Paragraph(f"<b>Action Profile:</b> {arm_pace}  |  <b>Closest Pro Bowler Match:</b> {pro_name}", body_bold))
     elif "shuttle_metrics" in report_data:
         shuttles = report_data["shuttle_metrics"].get("shuttles_detected", 0)
@@ -153,7 +183,7 @@ def generate_pdf_report(report_data: dict) -> str:
 
     # --- Section 2: Biomechanical Movement Metrics Table ---
     story.append(Paragraph("2. BIOMECHANICAL METRICS (0 – 100)", section_heading))
-    metrics = report_data.get("metrics", {})
+    metrics = _sanitize_for_pdf(report_data.get("metrics") or {})
     metric_rows = [["Biomechanical Metric", "Score", "Standard Benchmark", "Status"]]
     for k, v in metrics.items():
         name = k.replace("_", " ").title()
@@ -179,10 +209,10 @@ def generate_pdf_report(report_data: dict) -> str:
 
     # --- Section 3: Prescribed Fitness Exercises & Improvement Mechanics ---
     story.append(Paragraph("3. TARGETED CRICKET FITNESS DRILLS & IMPROVEMENT MECHANICS", section_heading))
-    exercises = report_data.get("exercises", [])
+    exercises = _sanitize_for_pdf(report_data.get("exercises", []))
     if not exercises and "recommendations" in report_data:
         # Fallback to standard recommendations if structured exercises format differs
-        exercises = report_data.get("recommendations", [])
+        exercises = _sanitize_for_pdf(report_data.get("recommendations", []))
 
     for idx, ex in enumerate(exercises, 1):
         if isinstance(ex, dict):
@@ -208,7 +238,7 @@ def generate_pdf_report(report_data: dict) -> str:
             story.append(Spacer(1, 6))
 
     # Long-term improvement note
-    long_term = report_data.get("how_following_improves")
+    long_term = _sanitize_for_pdf(report_data.get("how_following_improves"))
     if long_term:
         story.append(Spacer(1, 4))
         story.append(Paragraph(f"<b>Long-Term Performance Impact:</b> {long_term}", body_style))
@@ -216,7 +246,7 @@ def generate_pdf_report(report_data: dict) -> str:
     story.append(Spacer(1, 10))
 
     # --- Section 4: Cricket Nutrition & Recovery Diet Plan ---
-    nutrition = report_data.get("nutrition_plan", {})
+    nutrition = _sanitize_for_pdf(report_data.get("nutrition_plan") or {})
     if nutrition and isinstance(nutrition, dict):
         story.append(Paragraph("4. CRICKET NUTRITION & RECOVERY GUIDELINES", section_heading))
         nutri_rows = []
@@ -227,7 +257,7 @@ def generate_pdf_report(report_data: dict) -> str:
         if "hydration_strategy" in nutrition:
             nutri_rows.append([Paragraph("<b>Hydration Strategy:</b>", body_bold), Paragraph(str(nutrition["hydration_strategy"]), body_style)])
         if "key_foods" in nutrition and isinstance(nutrition["key_foods"], list):
-            foods_txt = " • " + " • ".join(nutrition["key_foods"])
+            foods_txt = " • " + " • ".join(str(item) for item in nutrition["key_foods"])
             nutri_rows.append([Paragraph("<b>Key Power Foods:</b>", body_bold), Paragraph(foods_txt, body_style)])
 
         if nutri_rows:
