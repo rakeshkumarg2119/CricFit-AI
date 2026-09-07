@@ -1,0 +1,17 @@
+[server]
+enableStaticServing = true
+
+[client]
+showErrorDetails = true
+
+[runner]
+# Allow unsafe_allow_html=True in st.markdown calls (required for custom HTML/CSS components)
+enforceSerializableSessionState = false
+
+[theme]
+base = "dark"
+backgroundColor = "#0B0F19"
+secondaryBackgroundColor = "#0F172A"
+primaryColor = "#06B6D4"
+textColor = "#F8FAFC"
+font = "sans serif"

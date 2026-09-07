@@ -1,5 +1,16 @@
 fastapi>=0.100.0
 uvicorn>=0.23.0
+python-multipart>=0.0.9
+groq>=0.9.0
+reportlab>=4.0.0
 pymongo>=4.5.0
 pydantic>=2.0.0
 python-dotenv>=1.0.0
+tensorflow
+mediapipe
+opencv-python-headless
+numpy
+scipy
+scikit-learn
+fastdtw
+joblib

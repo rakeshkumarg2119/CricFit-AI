@@ -4,6 +4,9 @@
   "extraPaths": [
     "frontend",
     "backend",
+    "bowling_model",
+    "batting_model",
+    "yoyo_test_model",
     "venv/Lib/site-packages"
   ],
   "exclude": [

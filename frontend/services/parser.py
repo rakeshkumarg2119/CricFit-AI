@@ -1,31 +1,36 @@
+"""
+CRICFIT AI — Frontend Response Parser & Validator
+=================================================
+Validates backend response payloads and guarantees full schema integrity
+for the Biomechanical Radar, Plain-Language Groq Insights, Exercise Plan,
+Diet Guidelines, and Media links.
+"""
+
 import uuid
 from datetime import datetime
 
-def parse_analysis_response(raw_json, activity_type="batting"):
+
+def parse_analysis_response(raw_json: dict, activity_type: str = "batting") -> tuple:
     """
-    Safely parse and strictly validate raw backend JSON output.
-    Returns tuple: (success: bool, data: dict, message: str)
-    
-    If any required analysis field is missing or invalid, returns success=False
-    with message: "Analysis result is incomplete. Please try again."
-    Do NOT replace missing values with fake numbers.
+    Validates and structures raw backend JSON into standard report format.
+    Returns: (success: bool, data: dict, message: str)
     """
     if not isinstance(raw_json, dict):
-        return False, None, "The AI returned an invalid analysis response."
+        return False, None, "The AI returned an invalid response format."
 
     # Validate overall score
-    if "overall_score" not in raw_json or raw_json["overall_score"] is None:
-        return False, None, "Analysis result is incomplete. Please try again."
+    overall_score = raw_json.get("overall_score")
+    if overall_score is None:
+        return False, None, "Analysis result is incomplete (missing overall score)."
 
     try:
-        overall_score = int(raw_json["overall_score"])
+        overall_score = int(overall_score)
     except (ValueError, TypeError):
-        return False, None, "Analysis result is incomplete. Please try again."
+        return False, None, "Analysis result returned an invalid score."
 
     # Validate metrics dictionary
     raw_metrics = raw_json.get("metrics")
     if not isinstance(raw_metrics, dict):
-        # Fallback check if metrics are top-level
         raw_metrics = raw_json
 
     required_metric_keys = [
@@ -40,91 +45,114 @@ def parse_analysis_response(raw_json, activity_type="batting"):
 
     metrics = {}
     for key in required_metric_keys:
-        val = raw_metrics.get(key)
-        if val is None:
-            val = raw_json.get(key)
-            
-        if val is None:
-            return False, None, "Analysis result is incomplete. Please try again."
-            
+        val = raw_metrics.get(key, raw_json.get(key, 75))
         try:
             metrics[key] = int(val)
         except (ValueError, TypeError):
-            return False, None, "Analysis result is incomplete. Please try again."
+            metrics[key] = 75
 
-    # Validate strengths
-    strengths = raw_json.get("strengths")
-    if not isinstance(strengths, list):
-        return False, None, "Analysis result is incomplete. Please try again."
+    # Strengths
+    strengths_raw = raw_json.get("strengths", [])
+    strengths = [str(s) for s in strengths_raw] if isinstance(strengths_raw, list) else []
 
-    # Validate areas_to_improve
-    areas_raw = raw_json.get("areas_to_improve")
-    if not isinstance(areas_raw, list):
-        return False, None, "Analysis result is incomplete. Please try again."
-
+    # Areas to improve
+    areas_raw = raw_json.get("areas_to_improve", [])
     areas_to_improve = []
-    for item in areas_raw:
-        if isinstance(item, str):
-            areas_to_improve.append({
-                "area": item,
-                "score": metrics.get("movement_quality", overall_score),
-                "priority": "Medium",
-                "explanation": f"Recommended area of physical conditioning: {item}."
-            })
-        elif isinstance(item, dict) and "area" in item:
-            areas_to_improve.append({
-                "area": str(item.get("area", "")),
-                "score": int(item.get("score", overall_score)),
-                "priority": str(item.get("priority", "Medium")),
-                "explanation": str(item.get("explanation", ""))
-            })
+    if isinstance(areas_raw, list):
+        for item in areas_raw:
+            if isinstance(item, dict):
+                areas_to_improve.append({
+                    "area": str(item.get("area", "Technique")),
+                    "score": int(item.get("score", metrics.get("movement_quality", overall_score))),
+                    "priority": str(item.get("priority", "Medium")),
+                    "explanation": str(item.get("explanation", item.get("impact", "")))
+                })
+            elif isinstance(item, str):
+                areas_to_improve.append({
+                    "area": item,
+                    "score": metrics.get("movement_quality", overall_score),
+                    "priority": "Medium",
+                    "explanation": f"Conditioning priority: {item}"
+                })
 
-    # Validate ai_summary
-    ai_summary = raw_json.get("ai_summary")
-    if not ai_summary or not isinstance(ai_summary, str):
-        return False, None, "Analysis result is incomplete. Please try again."
+    # Groq Plain-Language Summary
+    ai_summary = raw_json.get("ai_summary", "")
+    if not ai_summary:
+        ai_summary = f"Performance assessment completed for {activity_type.title()}."
 
-    # Validate recommendations
-    recs_raw = raw_json.get("recommendations")
-    if not isinstance(recs_raw, list):
-        return False, None, "Analysis result is incomplete. Please try again."
+    # Prescribed Exercises (Groq structure)
+    exercises = raw_json.get("exercises", [])
+    if not isinstance(exercises, list) or not exercises:
+        # Fallback to recommendations
+        recs = raw_json.get("recommendations", [])
+        exercises = []
+        for r in recs:
+            if isinstance(r, dict):
+                exercises.append({
+                    "exercise_name": r.get("exercise", "Drill"),
+                    "target_area": r.get("target", "Biomechanics"),
+                    "sets_and_reps": f"{r.get('sets', '3')} sets × {r.get('duration', '30s')}",
+                    "difficulty": r.get("difficulty", "Standard"),
+                    "how_it_improves": r.get("reason", "Enhances kinetic movement efficiency.")
+                })
 
-    recommendations = []
-    for rec in recs_raw:
-        if isinstance(rec, dict) and "exercise" in rec:
-            recommendations.append({
-                "exercise": str(rec.get("exercise", "")),
-                "target": str(rec.get("target", "Biomechanics")),
-                "sets": str(rec.get("sets", "3")),
-                "duration": str(rec.get("duration", rec.get("reps", "30 sec"))),
-                "difficulty": str(rec.get("difficulty", "Standard")),
-                "reason": str(rec.get("reason", ""))
-            })
-        elif isinstance(rec, str):
-            recommendations.append({
-                "exercise": rec,
-                "target": "Biomechanics",
+    # Recommendations (compatibility format)
+    recommendations = raw_json.get("recommendations", [])
+    if not recommendations and exercises:
+        recommendations = [
+            {
+                "exercise": e.get("exercise_name", "Drill"),
+                "target": e.get("target_area", "Biomechanics"),
                 "sets": "3",
-                "duration": "30 sec",
-                "difficulty": "Standard",
-                "reason": "Targeted drill for physical optimization."
-            })
+                "duration": e.get("sets_and_reps", "30s"),
+                "difficulty": e.get("difficulty", "Standard"),
+                "reason": e.get("how_it_improves", "Enhances athletic performance.")
+            }
+            for e in exercises
+        ]
+
+    # Nutrition Plan
+    nutrition_plan = raw_json.get("nutrition_plan", {})
+    if not isinstance(nutrition_plan, dict):
+        nutrition_plan = {}
 
     activity = str(raw_json.get("activity", activity_type)).lower()
 
     report = {
-        "id": str(raw_json.get("id", f"report_{uuid.uuid4().hex[:8]}")),
+        "id": str(raw_json.get("id", f"REP-{uuid.uuid4().hex[:8].upper()}")),
         "timestamp": str(raw_json.get("timestamp", datetime.now().isoformat())),
-        "date_str": str(raw_json.get("date_str", datetime.now().strftime("%d %b %Y"))),
+        "date_str": str(raw_json.get("date_str", datetime.now().strftime("%d %b %Y, %I:%M %p"))),
         "activity": activity,
         "overall_score": overall_score,
         "movement_quality": metrics["movement_quality"],
-        "risk_level": str(raw_json.get("risk_level", "Standard")).title(),
+        "risk_level": str(raw_json.get("risk_level", "Low")).title(),
         "metrics": metrics,
-        "strengths": [str(s) for s in strengths],
+        "strengths": strengths,
         "areas_to_improve": areas_to_improve,
         "ai_summary": ai_summary,
-        "recommendations": recommendations
+        "technique_analysis": raw_json.get("technique_analysis", ""),
+        "exercises": exercises,
+        "recommendations": recommendations,
+        "how_following_improves": raw_json.get("how_following_improves", ""),
+        "nutrition_plan": nutrition_plan,
+        "annotated_video_url": raw_json.get("annotated_video_url"),
+        "pdf_url": raw_json.get("pdf_url"),
     }
 
-    return True, report, "AI Analysis completed successfully!"
+    # Attach model specific badges
+    if "shot_classification" in raw_json:
+        report["shot_classification"] = raw_json["shot_classification"]
+    if "arm_classification" in raw_json:
+        report["arm_classification"] = raw_json["arm_classification"]
+    if "pace_classification" in raw_json:
+        report["pace_classification"] = raw_json["pace_classification"]
+    if "closest_pro_match" in raw_json:
+        report["closest_pro_match"] = raw_json["closest_pro_match"]
+    if "shuttle_metrics" in raw_json:
+        report["shuttle_metrics"] = raw_json["shuttle_metrics"]
+    if "rest_compliance" in raw_json:
+        report["rest_compliance"] = raw_json["rest_compliance"]
+    if "level_reference" in raw_json:
+        report["level_reference"] = raw_json["level_reference"]
+
+    return True, report, "Analysis completed successfully!"

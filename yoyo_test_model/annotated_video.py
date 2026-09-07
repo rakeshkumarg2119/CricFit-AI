@@ -23,6 +23,7 @@ Requires ffmpeg on the system PATH.
 """
 
 import os
+from typing import Optional
 
 import cv2
 import numpy as np
@@ -74,7 +75,7 @@ def _frame_state_label(det_idx, legs, rests):
 
 
 def generate_annotated_video(video_path: str, output_path: str, manual_input: dict,
-                              reference: dict = None,
+                              reference: Optional[dict] = None,
                               model_path: str = config.DEFAULT_MODEL_PATH):
     """Runs the full Yo-Yo pipeline AND produces one video with the skeleton
     + live RUNNING/RESTING/TURN/NO POSE label baked in. Returns
@@ -122,7 +123,7 @@ def generate_annotated_video(video_path: str, output_path: str, manual_input: di
     # annotated-video functions use (re-run pose detection rather than
     # caching landmarks from the first pass).
     cap2 = cv2.VideoCapture(video_path)
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    fourcc = cv2.VideoWriter.fourcc(*"mp4v")
     writer = cv2.VideoWriter(output_path, fourcc, fps, (frame_w, frame_h))
 
     landmarker2 = mp_vision.PoseLandmarker.create_from_options(

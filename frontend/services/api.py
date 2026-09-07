@@ -1,15 +1,28 @@
+"""
+CRICFIT AI — Frontend API Client Service
+========================================
+Connects Streamlit frontend to FastAPI backend for:
+- Video Biomechanical Analysis (Batting, Bowling, Yo-Yo)
+- Groq AI Intelligence & Nutrition Plans
+- PDF Report Downloads
+- Health Checks
+"""
+
 import requests
 import streamlit as st
 from config import BACKEND_URL
 from services.parser import parse_analysis_response
 
-def analyze_video(video_file, activity_type="batting"):
+
+def analyze_video(video_file, activity_type="batting", yoyo_level=None, user_id=None):
     """
-    Send the real uploaded video file to the FastAPI backend AI model.
+    Send the uploaded video file to the FastAPI backend AI vision model & Groq LLM pipeline.
     Endpoint: POST /analyze
-    Request payload:
+    Payload:
       - video: multipart file
-      - activity_type: 'batting' or 'bowling'
+      - activity_type: 'batting', 'bowling', or 'yoyo'
+      - yoyo_level: optional string (e.g. '16.5')
+      - user_id: optional user identifier
     
     Returns tuple: (success: bool, data: dict, message: str)
     """
@@ -24,23 +37,35 @@ def analyze_video(video_file, activity_type="batting"):
         files = {
             "video": (file_name, video_bytes, file_type)
         }
-        data = {
-            "activity_type": str(activity_type).lower()
-        }
         
-        response = requests.post(url, files=files, data=data, timeout=60)
+        current_user = user_id or st.session_state.get("user", {}).get("username", "anonymous")
+        data = {
+            "activity_type": str(activity_type).lower(),
+            "user_id": str(current_user)
+        }
+        if yoyo_level:
+            data["yoyo_level"] = str(yoyo_level)
+        
+        # Generous timeout for deep vision + Groq processing
+        response = requests.post(url, files=files, data=data, timeout=120)
         
         if response.status_code == 200:
             try:
                 raw_json = response.json()
             except Exception:
-                return False, None, "The AI returned an invalid analysis response."
+                return False, None, "The AI returned an unparseable response format."
                 
             return parse_analysis_response(raw_json, activity_type=activity_type)
         else:
-            return False, None, "Unable to analyze this video. Please try again."
+            try:
+                err_detail = response.json().get("detail", "Analysis failed.")
+            except Exception:
+                err_detail = f"Server error ({response.status_code})"
+            return False, None, f"Analysis Error: {err_detail}"
             
-    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
-        return False, None, "AI analysis service is unavailable. Please make sure the backend is running."
+    except requests.exceptions.Timeout:
+        return False, None, "The video analysis timed out. Please try a shorter video clip."
+    except requests.exceptions.ConnectionError:
+        return False, None, "AI backend service is unreachable. Please verify the backend server is running."
     except Exception as e:
-        return False, None, "Unable to analyze this video. Please try again."
+        return False, None, f"Unable to analyze video: {str(e)}"

@@ -14,6 +14,7 @@ raw video frames.
 """
 
 import time
+from typing import Optional
 
 import cv2
 import numpy as np
@@ -116,7 +117,7 @@ class ShuttleCadenceTracker:
             "elapsed_sec": round(float(elapsed), 1),
         }
 
-    def finalize(self, manual_input: dict, reference: dict = None) -> dict:
+    def finalize(self, manual_input: dict, reference: Optional[dict] = None) -> dict:
         """
         manual_input: {"yoyo_level": "16.3"} (the reported level.shuttle
                       score the test administrator/app already recorded).

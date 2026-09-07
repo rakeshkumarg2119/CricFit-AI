@@ -11,12 +11,26 @@ def _score_color(score):
     return "#EF4444"                   # Red
 
 
+def _safe_plotly_chart(fig):
+    """Render a Plotly chart, suppressing any rendering errors."""
+    try:
+        st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
+    except TypeError:
+        # Fallback for older Streamlit that still uses use_container_width
+        try:
+            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+        except Exception:
+            st.warning("Chart rendering unavailable.")
+    except Exception:
+        st.warning("Chart rendering unavailable.")
+
+
 # ─── Radar Chart ─────────────────────────────────────────────────────────────
 def render_radar_chart(metrics):
     """Dark-themed Plotly radar chart with real player scores."""
-    cats   = ['Balance', 'Lower Stability', 'Hip Mobility',
-              'Core Stability', 'Coordination', 'Body Symmetry']
-    vals   = [
+    cats = ['Balance', 'Lower Stability', 'Hip Mobility',
+            'Core Stability', 'Coordination', 'Body Symmetry']
+    vals = [
         metrics.get("balance", 0),
         metrics.get("lower_body_stability", 0),
         metrics.get("hip_mobility", 0),
@@ -30,8 +44,6 @@ def render_radar_chart(metrics):
     vals_c = vals + [vals[0]]
 
     fig = go.Figure()
-
-    # Player score
     fig.add_trace(go.Scatterpolar(
         r=vals_c, theta=cats_c, fill='toself', name='Your Biomechanics',
         fillcolor='rgba(6,182,212,0.22)',
@@ -68,7 +80,7 @@ def render_radar_chart(metrics):
         height=300,
     )
 
-    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+    _safe_plotly_chart(fig)
 
 
 # ─── Horizontal Bar Chart ─────────────────────────────────────────────────────
@@ -116,7 +128,7 @@ def render_horizontal_bar_chart(metrics):
         bargap=0.35,
     )
 
-    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+    _safe_plotly_chart(fig)
 
 
 # ─── Progress Line Chart ──────────────────────────────────────────────────────
@@ -183,4 +195,4 @@ def render_progress_line_chart(history_reports):
         hovermode='x unified',
     )
 
-    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+    _safe_plotly_chart(fig)
