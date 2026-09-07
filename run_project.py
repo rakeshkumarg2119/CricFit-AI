@@ -200,12 +200,13 @@ def main():
 
     # 3. Start Streamlit frontend
     print("\n[2/2] Starting Streamlit frontend...")
+    frontend_entry = os.path.join("frontend", "app.py") if os.path.isfile(os.path.join(PROJECT_ROOT, "frontend", "app.py")) else "app.py"
     frontend_cmd = [
         python_exe,
         "-m",
         "streamlit",
         "run",
-        "app.py",
+        frontend_entry,
         "--server.port",
         str(STREAMLIT_PORT),
         "--server.headless",

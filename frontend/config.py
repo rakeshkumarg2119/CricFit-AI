@@ -1,7 +1,14 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-# Load .env file if available
+# Load .env file from project root or frontend directory if available
+_root_env = Path(__file__).resolve().parent.parent / ".env"
+if _root_env.is_file():
+    load_dotenv(dotenv_path=_root_env)
+_local_env = Path(__file__).resolve().parent / ".env"
+if _local_env.is_file():
+    load_dotenv(dotenv_path=_local_env)
 load_dotenv()
 
 # App Branding

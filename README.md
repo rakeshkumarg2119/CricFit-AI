@@ -85,12 +85,21 @@
 
 5. **Run the FastAPI backend:**
    ```bash
-   uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+   uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
    ```
 
 6. **Run the Streamlit frontend:**
    ```bash
-   streamlit run app.py
+   streamlit run frontend/app.py
+   ```
+
+   *Alternatively, run both simultaneously using the unified launcher:*
+   ```bash
+   python run_project.py
+   # Or on Windows:
+   .\run_project.bat
+   # Or in PowerShell:
+   .\run_project.ps1
    ```
 
 ---

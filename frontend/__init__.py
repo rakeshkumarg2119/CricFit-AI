@@ -1,0 +1,1 @@
+"""CRICFIT AI Frontend Package."""

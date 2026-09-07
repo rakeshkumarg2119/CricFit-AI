@@ -39,7 +39,7 @@ echo [INFO] Waiting for FastAPI backend to initialize...
 timeout /t 3 /nobreak >nul
 
 echo [2/2] Starting Streamlit frontend on http://localhost:8501 ...
-start "CRICFIT AI - Streamlit Frontend" cmd /k "title CRICFIT AI Frontend && streamlit run app.py"
+start "CRICFIT AI - Streamlit Frontend" cmd /k "title CRICFIT AI Frontend && streamlit run frontend/app.py"
 
 echo.
 echo ===================================================

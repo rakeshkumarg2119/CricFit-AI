@@ -52,40 +52,34 @@
 ```
 cricfit-ai/
 │
-├── app.py                      # Main entrypoint, design system CSS & router
-├── config.py                   # Global constants and environment configuration
-├── requirements.txt            # Python dependencies
-├── README.md                   # Project documentation & setup guide
-├── .env.example                # Example environment variables
-├── .gitignore                  # Git ignore rules
+├── frontend/                   # Streamlit Frontend Web Application
+│   ├── app.py                  # Main entrypoint, design system CSS & page router
+│   ├── config.py               # Frontend settings, pages, branding, backend URL
+│   ├── requirements.txt        # Frontend-specific Python dependencies
+│   ├── pages/                  # Page views (login, home, batting, bowling, yoyo, injury, reports)
+│   ├── components/             # UI components (navbar, sidebar, cards, charts)
+│   ├── services/               # API clients and response parsers
+│   ├── utils/                  # Session state and formatting helpers
+│   ├── assets/                 # App logos and images
+│   └── static/                 # Static web resources
 │
-├── pages/
-│   ├── login.py                # Authentication UI (Login / Register)
-│   ├── home.py                 # Activity selector (Batting vs. Bowling)
-│   ├── batting.py              # Batting video upload & fitness report
-│   ├── bowling.py              # Bowling video upload & fitness report
-│   ├── reports.py              # Saved reports history dashboard
-│   ├── progress.py             # Historical fitness progression tracking
-│   └── profile.py              # Athlete profile & performance stats
+├── backend/                    # FastAPI Backend Service
+│   ├── main.py                 # FastAPI endpoints & CORS configuration
+│   ├── database.py             # MongoDB connection manager
+│   ├── injury_service.py       # Rule-based injury screening engine
+│   └── requirements.txt        # Backend-specific dependencies
 │
-├── components/
-│   ├── navbar.py               # Branding header & active mode indicator
-│   ├── sidebar.py              # Navigation sidebar & athlete card
-│   ├── metric_card.py          # Fitness metric cards & status badges
-│   ├── score_card.py           # Circular score display card
-│   ├── recommendation_card.py  # Exercise recommendation cards & strengths
-│   ├── report_card.py          # Saved report list item component
-│   ├── report_view.py          # Full fitness report dashboard renderer
-│   └── charts.py               # Plotly radar, comparison & trend charts
+├── batting_model/              # Batting biomechanics ML pipeline
+├── bowling_model/              # Bowling biomechanics ML pipeline
+├── yoyo_test_model/            # Yo-Yo cadence tracker & ML pipeline
 │
-├── services/
-│   ├── api.py                  # API service layer (FastAPI caller + mock fallback)
-│   ├── parser.py               # Resilient JSON parser converting model output to frontend schema
-│   └── mock_data.py            # Realistic mock JSON payload generators
-│
-└── utils/
-    ├── session.py              # Streamlit session_state managers
-    └── helpers.py              # Video validation & score status mappers
+├── run_project.py              # Unified launcher (starts backend + frontend)
+├── run_project.bat             # Windows launcher script
+├── run_project.ps1             # PowerShell launcher script
+├── start.ps1                   # Dual-window development launcher
+├── app.py                      # Root convenience shim forwarding to frontend/app.py
+├── requirements.txt            # Root dependencies
+└── .env                        # Environment configuration
 ```
 
 ---

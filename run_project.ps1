@@ -43,7 +43,7 @@ if ($Separate) {
     Start-Sleep -Seconds 3
 
     Write-Host "[2/2] Starting Streamlit frontend on http://localhost:8501..." -ForegroundColor Yellow
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot'; streamlit run app.py"
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$PSScriptRoot'; streamlit run frontend/app.py"
 
     Write-Host "`n[OK] Both services launched in separate windows!" -ForegroundColor Green
     Write-Host "     - FastAPI Backend : http://127.0.0.1:8000" -ForegroundColor White

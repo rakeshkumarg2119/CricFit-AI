@@ -2,6 +2,8 @@
   "venvPath": ".",
   "venv": "venv",
   "extraPaths": [
+    "frontend",
+    "backend",
     "venv/Lib/site-packages"
   ],
   "exclude": [
