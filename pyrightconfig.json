@@ -1,0 +1,16 @@
+{
+  "venvPath": ".",
+  "venv": "venv",
+  "extraPaths": [
+    "frontend",
+    "backend",
+    "venv/Lib/site-packages"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    "venv",
+    ".venv"
+  ],
+  "reportMissingTypeStubs": false
+}
