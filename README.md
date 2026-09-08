@@ -137,15 +137,29 @@ Injury Detection (separate flow):
 
 ## 📁 Demo
 
-<div align="center">
-  <img src="demo/batting_demo.gif" width="270"/>
-  <img src="demo/bowling_demo.gif" width="270"/>
-  <img src="demo/yoyo_demo.gif" width="270"/>
-  <br/>
-  <sub>Batting · Bowling · Yo-Yo Test — live annotated analysis</sub>
-</div>
 
-- 📄 [Sample fitness report (PDF)](backend/outputs/reports/sample_report.pdf)
+<div align="center">
+  <img src="demo/batting_demo.gif" width="500"/>
+  <br/>
+  <sub>Batting</sub>
+  <br/>
+  <hr/>
+  <img src="demo/bowling_demo.gif" width="500"/>
+  <br/>
+  <sub>Bowling</sub>
+  <br/>
+  <hr/>
+  <img src="demo/yoyo_demo.gif" width="500"/>
+  <br/>
+  <sub>Yo-Yo Test — live annotated analysis</sub>
+  <br/>
+  <hr/>
+</div>
+ 
+
+
+
+- 📄 [Sample fitness report (PDF)](backend/outputs/reports/CricFit-AI_batting_report_CF-CD6A786C.pdf)
 
 ```text
 demo/                       → Inline-preview GIFs (batting, bowling, Yo-Yo test)
