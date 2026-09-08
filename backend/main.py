@@ -82,6 +82,56 @@ def health_check():
 # ============================================================================
 # Core Video Biomechanics & Groq Analysis Endpoint
 # ============================================================================
+# ============================================================================
+# Pose/Shot-Aware History Filtering (for accurate progress comparison)
+# ============================================================================
+def _filter_reports_by_pose_match(
+    activity: str,
+    current_raw_output: dict,
+    candidate_reports: List[dict],
+) -> List[dict]:
+    """
+    Narrows previous-session history down to sessions that match the SAME
+    pose/shot type as the current upload, so Groq's progress comparison is
+    meaningful (e.g. pullshot compared only against previous pullshots,
+    not against cover drives or straight drives).
+
+    - Batting: matches on shot_classification.label
+    - Bowling: matches on arm_classification.label + pace_classification.label
+    - Yo-Yo: no sub-type to match on; all same-activity sessions qualify
+
+    If the current session's pose/shot can't be determined, or no prior
+    session shares that exact pose/shot, returns an empty list so Groq
+    treats it as a fresh baseline rather than comparing against unrelated
+    movements.
+    """
+    if not candidate_reports:
+        return []
+
+    if activity == "batting":
+        current_shot = current_raw_output.get("shot_classification", {}).get("label")
+        if not current_shot:
+            return []
+        return [
+            r for r in candidate_reports
+            if r.get("shot_classification", {}).get("label") == current_shot
+        ]
+
+    elif activity == "bowling":
+        current_arm = current_raw_output.get("arm_classification", {}).get("label")
+        current_pace = current_raw_output.get("pace_classification", {}).get("label")
+        if not current_arm or not current_pace:
+            return []
+        return [
+            r for r in candidate_reports
+            if r.get("arm_classification", {}).get("label") == current_arm
+            and r.get("pace_classification", {}).get("label") == current_pace
+        ]
+
+    else:  # Yo-Yo / endurance has no distinct pose sub-type to match on
+        return candidate_reports
+
+
 @app.post("/analyze")
 def analyze_video_endpoint(
     video: UploadFile = File(...),
@@ -94,9 +144,10 @@ def analyze_video_endpoint(
     1. Saves video upload.
     2. Runs CV/ML Model (Batting / Bowling / Yo-Yo).
     3. Saves raw model JSON to database first.
-    4. Passes telemetry to Groq LLM (Plain-text insights, Drills, Food Plan).
-    5. Generates printable PDF report.
-    6. Returns structured response with text format, metrics, and media URLs.
+    4. Fetches the athlete's previous sessions for comparison.
+    5. Passes telemetry + history to Groq LLM (Plain-text insights, progress comparison, drills, food plan).
+    6. Generates printable PDF report.
+    7. Returns structured response with text format, metrics, and media URLs.
     Executed in FastAPI background threadpool to avoid blocking main event loop.
     """
     activity = activity_type.strip().lower()
@@ -139,10 +190,25 @@ def analyze_video_endpoint(
         # ── 2. Database First: Save Raw Output ────────────────────────────────
         raw_doc_id = save_raw_model_report(user_id=user_id, activity=activity, raw_output=raw_output)
 
-        # ── 3. Groq LLM Intelligence Layer ──────────────────────────────────
-        llm_insights = generate_llm_insights(activity_type=activity, model_output=raw_output)
+        # ── 3. Fetch Previous Sessions for Comparative Analysis ───────────────
+        # Only compares against sessions of the SAME pose/shot type, so a
+        # pullshot isn't compared against a cover drive, and a right-arm-fast
+        # bowler isn't compared against a left-arm-spin session.
+        past_reports = []
+        try:
+            same_activity_reports = get_user_fitness_reports(user_id=user_id, activity=activity)
+            past_reports = _filter_reports_by_pose_match(activity, raw_output, same_activity_reports)
+        except Exception as e:
+            print(f"[WARN] Failed to fetch past reports for Groq comparison: {e}")
 
-        # ── 4. Build Static Media URLs ────────────────────────────────────────
+        # ── 4. Groq LLM Intelligence Layer with Comparative Analysis ─────────
+        llm_insights = generate_llm_insights(
+            activity_type=activity,
+            model_output=raw_output,
+            previous_reports=past_reports
+        )
+
+        # ── 5. Build Static Media URLs ────────────────────────────────────────
         report_id = f"CF-{uuid.uuid4().hex[:8].upper()}"
         
         video_url = None
@@ -150,7 +216,7 @@ def analyze_video_endpoint(
             rel_video = os.path.relpath(annotated_video_path, str(OUTPUTS_DIR)).replace("\\", "/")
             video_url = f"/outputs/{rel_video}"
 
-        # ── 5. Generate PDF Report ────────────────────────────────────────────
+        # ── 6. Generate PDF Report ────────────────────────────────────────────
         # Temporary unified representation for PDF builder
         interim_report = adapt_to_unified_report(
             activity_type=activity,
@@ -166,7 +232,7 @@ def analyze_video_endpoint(
             rel_pdf = os.path.relpath(pdf_file_path, str(OUTPUTS_DIR)).replace("\\", "/")
             pdf_url = f"/outputs/{rel_pdf}"
 
-        # ── 6. Final Unified Schema & Persistence ─────────────────────────────
+        # ── 7. Final Unified Schema & Persistence ─────────────────────────────
         final_report = adapt_to_unified_report(
             activity_type=activity,
             raw_model_output=raw_output,

@@ -93,6 +93,8 @@ def adapt_to_unified_report(
         "metrics": metrics,
         "ai_summary": llm_insights.get("plain_language_summary", ""),
         "technique_analysis": llm_insights.get("technique_analysis", ""),
+        "progress_comparison": llm_insights.get("progress_comparison", ""),
+        "motivational_boost": llm_insights.get("motivational_boost", ""),
         "strengths": strengths,
         "areas_to_improve": formatted_areas,
         "exercises": exercises,
