@@ -1,1 +1,2 @@
+yoyo_test.gif filter=lfs diff=lfs merge=lfs -text
 demo/*.gif filter=lfs diff=lfs merge=lfs -text
