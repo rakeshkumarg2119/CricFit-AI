@@ -137,6 +137,14 @@ def generate_pdf_report(report_data: dict) -> str:
         textColor=colors.HexColor('#D97706')
     )
 
+    vo2_label_style = ParagraphStyle(
+        'VO2Title',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=9,
+        textColor=colors.HexColor('#0369A1')
+    )
+
     story = []
 
     # --- Header Banner Table ---
@@ -235,6 +243,57 @@ def generate_pdf_report(report_data: dict) -> str:
         ]))
         story.append(t_boost)
         story.append(Spacer(1, 6))
+
+    # VO2max & Speed Analysis + Shuttle Improvement Plan (Yo-Yo test only —
+    # these keys only exist on Yo-Yo reports, so batting/bowling reports
+    # simply skip both blocks with no layout change).
+    vo2_analysis = _sanitize_for_pdf(report_data.get("vo2max_and_speed_analysis"))
+    if vo2_analysis:
+        vo2_cell = [
+            Paragraph("VO2 MAX &amp; SPEED ANALYSIS:", vo2_label_style),
+            Paragraph(str(vo2_analysis), body_style)
+        ]
+        t_vo2 = Table([[vo2_cell]], colWidths=[530])
+        t_vo2.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#EFF6FF')),
+            ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#93C5FD')),
+            ('TOPPADDING', (0,0), (-1,-1), 6),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+            ('LEFTPADDING', (0,0), (-1,-1), 8),
+            ('RIGHTPADDING', (0,0), (-1,-1), 8),
+        ]))
+        story.append(t_vo2)
+        story.append(Spacer(1, 6))
+
+    shuttle_plan = cast(Dict[str, Any], _sanitize_for_pdf(report_data.get("shuttle_improvement_plan") or {}))
+    if shuttle_plan and isinstance(shuttle_plan, dict):
+        plan_lines = []
+        if shuttle_plan.get("shuttles_to_next_level"):
+            plan_lines.append(
+                f"<b>Shuttles to next level:</b> {shuttle_plan['shuttles_to_next_level']} "
+                f"(+{shuttle_plan.get('distance_to_next_level_m', '?')}m)"
+            )
+        if shuttle_plan.get("shuttles_to_target_score"):
+            plan_lines.append(f"<b>Shuttles to target score:</b> {shuttle_plan['shuttles_to_target_score']}")
+        gap_tips = shuttle_plan.get("how_to_close_the_gap")
+        if isinstance(gap_tips, list) and gap_tips:
+            plan_lines.append("<b>How to close the gap:</b>")
+            plan_lines.extend(f"&nbsp;&nbsp;• {tip}" for tip in gap_tips)
+
+        if plan_lines:
+            plan_cell = [Paragraph("SHUTTLE IMPROVEMENT PLAN:", vo2_label_style)]
+            plan_cell.extend(Paragraph(line, body_style) for line in plan_lines)
+            t_plan = Table([[plan_cell]], colWidths=[530])
+            t_plan.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#EFF6FF')),
+                ('BOX', (0,0), (-1,-1), 0.5, colors.HexColor('#93C5FD')),
+                ('TOPPADDING', (0,0), (-1,-1), 6),
+                ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+                ('LEFTPADDING', (0,0), (-1,-1), 8),
+                ('RIGHTPADDING', (0,0), (-1,-1), 8),
+            ]))
+            story.append(t_plan)
+            story.append(Spacer(1, 6))
 
     # --- Section 2: Biomechanical Movement Metrics Table ---
     story.append(Paragraph("2. BIOMECHANICAL METRICS (0 – 100)", section_heading))
