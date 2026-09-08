@@ -8,7 +8,7 @@
 
 ## 🌟 Overview
 
-**CricFit AI** is an intelligent video-analysis platform that helps cricketers assess and improve their physical performance. Users log in, upload a **batting** or **bowling** video, and our AI pipeline analyzes body mechanics to generate a structured fitness report — covering balance, stability, flexibility, and more. Reports are stored in MongoDB and enriched by **Grok AI**, which turns raw metrics into actionable, motivating feedback. On repeat uploads, CricFit AI compares the new report against the user's history to track real improvement over time.
+**CricFit AI** is an intelligent video-analysis platform that helps cricketers assess and improve their physical performance. Users log in, upload a **batting**, **bowling**, or **Yo-Yo test (shuttle run)** video, and our AI pipeline analyzes body mechanics to generate a structured fitness report — covering balance, stability, flexibility, and more. Reports are stored in MongoDB and enriched by **Grok AI**, which turns raw metrics into actionable, motivating feedback. On repeat uploads, CricFit AI compares the new report against the user's history to track real improvement over time. The platform also includes an **Injury Detection module**, giving athletes stage-wise guidance on reported pain/injury and when to see a doctor.
 
 ---
 
@@ -29,6 +29,8 @@
 - **🧠 Grok AI Coaching Layer:** Converts raw scores into personalized exercise recommendations and boosting/motivational messages.
 - **📈 Progress Tracking:** On repeat uploads, current and historical reports are both sent to Grok AI to generate an improvement summary and updated fitness tips.
 - **🏆 Bowling Action Match (Bowling-only):** Compares the user's bowling action against professional players (e.g. Jasprit Bumrah) and reports a closeness/match score, alongside improvement guidance.
+- **🏃‍♂️ Yo-Yo Test Analysis:** Users upload a shuttle-run (Yo-Yo test) video; CricFit AI + Grok AI analyze running/turning form and generate improvement guidance — a key indicator for fitness and team selection.
+- **🩹 Injury Detection Module:** Users select injury type(s), pain level, and body location, plus a free-text description. The system returns a **stage-wise assessment** (e.g. Stage 1 — mild, home care; up to Stage 4 — critical, requires surgical consultation), always recommending professional medical consultation for higher-severity stages.
 - **🗄️ MongoDB Report History:** All reports are persisted per user, enabling longitudinal progress comparisons.
 
 ---
@@ -85,21 +87,12 @@
 
 5. **Run the FastAPI backend:**
    ```bash
-   uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
+   uvicorn main:app --host 0.0.0.0 --port 8000 --reload
    ```
 
 6. **Run the Streamlit frontend:**
    ```bash
-   streamlit run frontend/app.py
-   ```
-
-   *Alternatively, run both simultaneously using the unified launcher:*
-   ```bash
-   python run_project.py
-   # Or on Windows:
-   .\run_project.bat
-   # Or in PowerShell:
-   .\run_project.ps1
+   streamlit run app.py
    ```
 
 ---
@@ -108,9 +101,10 @@
 
 ```text
 1. User logs in via Streamlit
-2. User uploads batting/bowling video
+2. User uploads batting / bowling / Yo-Yo test video
 3. Pose estimation extracts body keypoints frame-by-frame
-4. Keras model (batting/bowling specific) scores the 7 fitness metrics
+4. Keras model (batting/bowling specific) scores the fitness metrics
+   → For Yo-Yo test: form + pacing metrics generated instead
 5. Report saved to MongoDB (linked to user)
 6. Report sent to Grok AI → generates exercises + boosting message
 7. [Bowling only] Action compared against pro player reference → match score
@@ -118,20 +112,46 @@
    → Previous + current report sent to Grok AI
    → Grok AI returns improvement summary + updated fitness tips
 9. Final report returned to user via Streamlit
+
+Injury Detection (separate flow):
+1. User selects injury type(s), pain level, body location + free-text description
+2. System classifies severity into stages (Stage 1 → Stage 4)
+3. Stage-appropriate guidance returned (home care → medical consultation → surgical referral)
+4. Higher stages always flag "consult a doctor" — module is advisory, not diagnostic
 ```
 
 ---
 
 ## 👥 Team
 
-| Member                  | Responsibility                                              |
-|--------------------------|--------------------------------------------------------------|
-| Varshini                 | Frontend                                                     |
-| Siva Dharshana            | Backend                                                       |
-| Kavya                     | Frontend–Backend integration, dataset collection (batting)   |
-| Mithun Maharajan K        | Batting model training (Keras)                                |
-| Rakesh Kumar G             | Bowling model training (Keras)                                |
-| Sudherson                 | Pose estimation calculation, dataset collection (bowling)     |
+| Member                  | Responsibility                                                                 |
+|--------------------------|----------------------------------------------------------------------------------|
+| Varshini                 | Frontend (login, upload, report display) + frontend-side API integration code   |
+| Siva Dharshana            | Backend core (FastAPI setup, auth, upload endpoint, model/Grok orchestration)    |
+| Kavya                     | Backend-frontend connection, MongoDB CRUD (save/fetch/compare reports), dataset collection (batting) |
+| Mithun Maharajan K        | Batting model training & tuning (Keras)                                          |
+| Rakesh Kumar G             | Bowling model training & tuning (Keras), Bumrah action-match scoring logic       |
+| Sudherson                 | Pose estimation metric calculation (keypoints → fitness scores), dataset collection (bowling) |
+
+---
+
+## 📁 Demo
+
+<div align="center">
+  <img src="demo/batting_demo.gif" width="270"/>
+  <img src="demo/bowling_demo.gif" width="270"/>
+  <img src="demo/yoyo_demo.gif" width="270"/>
+  <br/>
+  <sub>Batting · Bowling · Yo-Yo Test — live annotated analysis</sub>
+</div>
+
+- 📄 [Sample fitness report (PDF)](backend/outputs/reports/sample_report.pdf)
+
+```text
+demo/                       → Inline-preview GIFs (batting, bowling, Yo-Yo test)
+backend/outputs/videos/     → Full-length annotated analysis recordings
+backend/outputs/reports/    → Generated fitness reports (PDF)
+```
 
 ---
 
